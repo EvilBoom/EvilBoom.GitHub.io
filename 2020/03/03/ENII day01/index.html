@@ -43,44 +43,7 @@
 
     
     
-        <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    "HTML-CSS": {
-        preferredFont: "TeX",
-        availableFonts: ["STIX","TeX"],
-        linebreaks: { automatic:true },
-        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
-    },
-    tex2jax: {
-        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
-        processEscapes: true,
-        ignoreClass: "tex2jax_ignore|dno",
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    },
-    TeX: {
-        equationNumbers: { autoNumber: "AMS" },
-        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
-        Macros: { href: "{}" }
-    },
-    messageStyle: "none"
-    });
-</script>
-<!-- 给MathJax元素添加has-jax class -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i=0; i < all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-</script>
-<!-- 通过连接CDN加载MathJax的js代码 -->
-<script type="text/javascript" async
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
-
-
+        
     
 
 
@@ -300,7 +263,7 @@
                 
                     <p class="copyright-item">
                         <span>Permalink:</span>
-                        <span><a href="http://yoursite.com/2020/03/03/ENII%20day01/">http://yoursite.com/2020/03/03/ENII%20day01/</a></span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/03/ENII%20day01/">http://blog.torpedostudio.cn/2020/03/03/ENII%20day01/</a></span>
                     </p>
                 
                 
@@ -309,11 +272,6 @@
                         <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
                     </p>
                 
-                
-                     <p class="copyright-item">
-                         <span>Slogan:</span>
-                         <span>Do you believe in <strong>DESTINY</strong>?</span>
-                     </p>
                 
 
             </section>
@@ -336,7 +294,7 @@
                 <a class="prev" rel="prev" href="/2020/03/04/gkqy/">gkqy</a>
             
             
-            <a class="next" rel="next" href="/2020/03/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/">数据库面向对象</a>
+            <a class="next" rel="next" href="/2020/03/02/TorpedoStudio/">start</a>
             
         </section>
 

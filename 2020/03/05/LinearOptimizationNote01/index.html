@@ -16,7 +16,7 @@
     <meta name="keywords" content="NLP">
 
 
-<title>LinearOptimization00 | Torpedostudio</title>
+<title>Linear Optimaziton 01  导论 | Torpedostudio</title>
 
 
 
@@ -43,7 +43,8 @@
 
     
     
-        <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
+        
+            <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
     "HTML-CSS": {
@@ -81,6 +82,7 @@
 </script>
 
 
+        
     
 
 
@@ -214,7 +216,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">LinearOptimization00</h1>
+            <h1 class="post-title">Linear Optimaziton 01  导论</h1>
             
                 <div class="post-meta">
                     
@@ -223,7 +225,7 @@
 
                     
                         <span class="post-time">
-                        Date: <a href="#">March 5, 2020&nbsp;&nbsp;15:01:14</a>
+                        Date: <a href="#">March 5, 2020&nbsp;&nbsp;0:00:00</a>
                         </span>
                     
                     
@@ -232,26 +234,145 @@
         </header>
 
         <div class="post-content">
-            <h1 id="linear-optimaziton-00">Linear Optimaziton 00</h1>
-<h2 id="information">information</h2>
-<pre><code>+ date: 2020-03-05
-+ author: zby</code></pre>
-<h2 id="objective">Objective</h2>
-<pre><code>1. 了解基础的理论和算法
-2. 涉及到了数学分析，理论证明，程序设计以及数值计算
-3. 基础课程</code></pre>
-<h2 id="prerequisites">Prerequisites</h2>
-<pre><code>+ Matrix theory
-+ Linear Algebra
-+ Introduction to OR</code></pre>
-<h2 id="course-content">Course content</h2>
+            <h2 id="what-is-linear-programming">What is Linear Programming</h2>
 <ol type="1">
-<li>Introduction to LP 导论</li>
-<li>Geometric Interpretation of LP 用图形的方式来直观的看待LP</li>
-<li>Simplex Method 对偶问题</li>
-<li>Duality and Sensitivity Analysis 灵敏度分析</li>
-<li>Interior Point Method 内点算法 -- 多项式算法 -- 其他的算法</li>
-<li>Related Topics</li>
+<li><p>Programming -- 这里其实就是 Optimization 的意思，使program work 就是 programming ，把 program 做好，就是Optimization</p>
+<ul>
+<li>优化通俗来说可以说是在一定条件下尽可能满足一些需求</li>
+</ul></li>
+<li><p>Linear 线性就是限制的条件是以线性的形式表达</p></li>
+<li><p><strong>LP 就是优化一个线性的目标函数，其中的决策变量服从一个由线性约束组成的集合。</strong></p>
+<ul>
+<li>Example
+<ul>
+<li>Minimize(目标函数) <span class="math inline">\(x_1 - 2x_2\)</span></li>
+<li>subject to(线性约束 linear constraints)
+<ul>
+<li><span class="math inline">\(x_1 + x_2 &lt;= 40\)</span></li>
+<li><span class="math inline">\(2x_2 + x_2 &lt;=60\)</span></li>
+<li><span class="math inline">\(x_1,x_2&gt;=0\)</span></li>
+</ul></li>
+</ul></li>
+<li>General Form 一般形式
+<ul>
+<li><p>有 n 个决策变量：<span class="math inline">\(x_1,x_2,\dots,x_n&gt;=0\)</span></p></li>
+<li><p>有 1 个线性目标函数 Minimize（Maximize）<span class="math inline">\(c_1x_1+c_2x_2+\dots+c_nx_n\)</span></p></li>
+<li><p>有 m 个线性约束 s.t.</p>
+<p><span class="math display">\[a_{11}x_1+a_{12}x_2+ \dots +a_{1n}x_n &gt;|=|&lt; b_1\]</span> <span class="math display">\[a_{21}x_1+a_{22}x_2+ \dots +a_{2n}x_n &gt;|=|&lt; b_2\]</span> <span class="math display">\[\dots\]</span> <span class="math display">\[a_{m1}x_1+a_{m2}x_2+ \dots +a_{mn}x_n &gt;|=|&lt; b_m\]</span></p></li>
+</ul></li>
+<li>我们想要解决的问题就是怎么让计算机去帮助我们<strong>在线性约束出的可行域内来计算出使得线性目标函数最优的决策变量</strong>。</li>
+</ul></li>
+</ol>
+<h2 id="why-to-study-linear-programming">Why to study Linear Programming</h2>
+<ol type="1">
+<li>复杂的问题线很难解决，所以我们可以线性化 -- 广泛的应用
+<ul>
+<li>最广泛应用的方法</li>
+<li>一次函数</li>
+</ul></li>
+<li>作为其他更高级学科的基础（标量-向量-矩阵）
+<ul>
+<li>非线性优化</li>
+<li>network flow</li>
+<li>整数优化</li>
+<li><strong>锥优化</strong>Conic Programming -- 从第一象限来的</li>
+<li><strong>半正定优化</strong>--特征值都是非负的矩阵是半正定矩阵，所有具有非负特征的矩阵连起来就是一个锥（Semidefinite Programming）--初等二次函数</li>
+<li>鲁棒优化Robust Optimization （虽然现在不是最好，但是具有鲁棒性）</li>
+</ul></li>
+<li>Example
+<ul>
+<li>stay。。。</li>
+</ul></li>
+</ol>
+<h2 id="how-to-study-linear-programming">How to study Linear Programming</h2>
+<ol type="1">
+<li>首先用<strong>几何</strong>的直觉来感知LP，Geometric intuition</li>
+<li>细节上用代方法数<strong>精准计算</strong>并<strong>证明</strong>，Algebraic manipulation</li>
+<li>最后利用计算机来帮助计算，Coputer programming</li>
+<li>e.g. 凭借自己的直觉确定一个问题会有一个顶点，等同于解出一个式子，最后用计算机来帮助自己实现。</li>
+</ol>
+<h2 id="history-to-study-linear-programming">History to study Linear Programming</h2>
+<ol type="1">
+<li>stay。。。。</li>
+</ol>
+<h2 id="how-to-slove-an-lp-problem">How to slove an LP problem</h2>
+<ol type="1">
+<li>What's special about LP?
+<ul>
+<li>linear constriants 每一个线性约束都是一条线(二维)，交出一个凸的多边形(<strong>convex plyhedral set</strong>)，就会有有限的顶点(finite number of <strong>vertices</strong>)</li>
+<li>线性目标函数提供了每个固定值的线性轮廓（linear contour）</li>
+</ul></li>
+<li>Fundamental theory of LP
+<ul>
+<li>对于一个线性优化问题，如果他的可行域不是空的，那么他的最优解要么是无限大的，要么至少在可行域的一个顶点上达到。</li>
+</ul></li>
+<li>How to find an optimal sulution?
+<ul>
+<li>pic</li>
+<li>Question:how to find <span class="math inline">\(x^*\)</span></li>
+<li>solve --
+<ul>
+<li>Enumeration Method 最简单的方法一个一个来计算
+<ul>
+<li>找到所有的顶点，通过计算来找到最优的那一个</li>
+<li>Inpractical 当从n个变量中服从m个约束 <span class="math inline">\(C(n,m) = \frac{n!}{m!(n-m)!}\)</span> 太大了不可计算</li>
+<li>n=1000,m=500 ,c(n,m)&gt;<span class="math inline">\(10^{15}\)</span></li>
+</ul></li>
+<li>Simplex method 每次选一个 (G.B.Dantzig，1948)
+<ul>
+<li>step1：从一个顶点开始</li>
+<li>step2：如果当前 vertex 是最优的，就停止</li>
+<li>step3：移动到一个更好的相邻的 vertex ，goto step2</li>
+<li>Is Simplex Method Good？
+<ul>
+<li>一般情况下，工作得很好；<span class="math inline">\(0.7159m^{0.9522}n^{0.3109}\)</span> -- 大约为3000多次</li>
+<li>最糟糕的情况（Klee &amp; Minty,1971），要走<span class="math inline">\(2^n-1\)</span>个vertices</li>
+<li>指数型的爆发增长，exponential time</li>
+</ul></li>
+</ul></li>
+<li>避免掉入指数增长--ploynomial time Algorithm 多项式事件算法</li>
+<li>Is there a polynomial-time algorithm for LP?
+<ul>
+<li>有，Ellipsoid Method by L.G.Khanchian 1979
+<ul>
+<li>pic</li>
+<li>Basic ideas：
+<ul>
+<li>Consider solving Mx &lt; d
+<ul>
+<li><span class="math inline">\(M:m * n , x{\in}R^m, d{\in}R^m\)</span></li>
+</ul></li>
+<li>细节看 url</li>
+</ul></li>
+</ul></li>
+<li>有，Interior Point Mehod by Karmarkar in 1984
+<ul>
+<li>Basic ideas： walk through interior
+<ul>
+<li>step1: startwith an interior solution,从里面找一个解</li>
+<li>step2：如果这个解足够好，停止</li>
+<li>step3：到另外一个好的内部解（a better interior solition),goto step2</li>
+</ul></li>
+<li>是 polynomial-time algorithm ，complexity= O(<span class="math inline">\(n^3L\)</span>).</li>
+<li>在大的LP问题上是有效的</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ol>
+<h2 id="where-to-go">Where to go</h2>
+<ol type="1">
+<li>解决现实问题时：
+<ul>
+<li>看这个问题的special structure</li>
+<li>约束是不是稀疏的，sparsity</li>
+<li>有繁化简</li>
+<li>并行计算</li>
+</ul></li>
+<li>非线性优化用linear constraints</li>
+<li>锥优化</li>
+<li>半正定优化</li>
+<li>鲁棒性优化</li>
 </ol>
 
         </div>
@@ -267,7 +388,7 @@
                 
                     <p class="copyright-item">
                         <span>Permalink:</span>
-                        <span><a href="http://yoursite.com/2020/03/05/LinearOptimization00/">http://yoursite.com/2020/03/05/LinearOptimization00/</a></span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/05/LinearOptimizationNote01/">http://blog.torpedostudio.cn/2020/03/05/LinearOptimizationNote01/</a></span>
                     </p>
                 
                 
@@ -276,11 +397,6 @@
                         <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
                     </p>
                 
-                
-                     <p class="copyright-item">
-                         <span>Slogan:</span>
-                         <span>Do you believe in <strong>DESTINY</strong>?</span>
-                     </p>
                 
 
             </section>
@@ -300,10 +416,10 @@
         </section>
         <section class="post-nav">
             
-                <a class="prev" rel="prev" href="/2020/03/05/LinearOptimization01/">LinearOptimization01</a>
+                <a class="prev" rel="prev" href="/2020/03/05/%E5%BB%BA%E6%A8%A1%E4%BB%BF%E7%9C%9F01/">建模仿真01</a>
             
             
-            <a class="next" rel="next" href="/2020/03/05/%E5%95%86%E5%8A%A1%E6%99%BA%E8%83%BD/">商务智能</a>
+            <a class="next" rel="next" href="/2020/03/04/%E8%BF%90%E7%AD%B9%E5%AD%A6/">运筹学</a>
             
         </section>
 

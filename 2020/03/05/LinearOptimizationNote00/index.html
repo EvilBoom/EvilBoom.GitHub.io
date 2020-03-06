@@ -16,7 +16,7 @@
     <meta name="keywords" content="NLP">
 
 
-<title>LinearOptimization01 | Torpedostudio</title>
+<title>LinearOptimizationNote00 | Torpedostudio</title>
 
 
 
@@ -43,44 +43,7 @@
 
     
     
-        <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    "HTML-CSS": {
-        preferredFont: "TeX",
-        availableFonts: ["STIX","TeX"],
-        linebreaks: { automatic:true },
-        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
-    },
-    tex2jax: {
-        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
-        processEscapes: true,
-        ignoreClass: "tex2jax_ignore|dno",
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    },
-    TeX: {
-        equationNumbers: { autoNumber: "AMS" },
-        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
-        Macros: { href: "{}" }
-    },
-    messageStyle: "none"
-    });
-</script>
-<!-- 给MathJax元素添加has-jax class -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax(), i;
-        for(i=0; i < all.length; i += 1) {
-            all[i].SourceElement().parentNode.className += ' has-jax';
-        }
-    });
-</script>
-<!-- 通过连接CDN加载MathJax的js代码 -->
-<script type="text/javascript" async
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
-
-
+        
     
 
 
@@ -214,7 +177,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">LinearOptimization01</h1>
+            <h1 class="post-title">LinearOptimizationNote00</h1>
             
                 <div class="post-meta">
                     
@@ -223,7 +186,7 @@
 
                     
                         <span class="post-time">
-                        Date: <a href="#">March 5, 2020&nbsp;&nbsp;18:32:44</a>
+                        Date: <a href="#">March 5, 2020&nbsp;&nbsp;15:01:14</a>
                         </span>
                     
                     
@@ -232,31 +195,27 @@
         </header>
 
         <div class="post-content">
-            <h1 id="linear-optimaziton-01-导论">Linear Optimaziton 01 导论</h1>
-<h2 id="what-is-linear-programming">What is Linear Programming</h2>
+            <h1 id="linear-optimaziton-00">Linear Optimaziton 00</h1>
+<h2 id="information">information</h2>
+<pre><code>+ date: 2020-03-05
++ author: zby</code></pre>
+<h2 id="objective">Objective</h2>
+<pre><code>1. 了解基础的理论和算法
+2. 涉及到了数学分析，理论证明，程序设计以及数值计算
+3. 基础课程</code></pre>
+<h2 id="prerequisites">Prerequisites</h2>
+<pre><code>+ Matrix theory
++ Linear Algebra
++ Introduction to OR</code></pre>
+<h2 id="course-content">Course content</h2>
 <ol type="1">
-<li><p>Programming -- 这里其实就是 Optimization 的意思，使program work 就是 programming ，把 program 做好，就是Optimization</p>
-<ul>
-<li>优化通俗来说可以说是在一定条件下尽可能满足一些需求</li>
-</ul></li>
-<li><p>Linear 线性就是限制的条件是以线性的形式表达</p></li>
-<li><p><strong>LP 就是优化一个线性的目标函数，其中的决策变量服从一个由线性约束组成的集合。</strong></p>
-<ul>
-<li>Example
-<ul>
-<li>Minimize(目标函数) <span class="math inline">\(x^2\)</span></li>
-</ul></li>
-</ul></li>
+<li>Introduction to LP 导论</li>
+<li>Geometric Interpretation of LP 用图形的方式来直观的看待LP</li>
+<li>Simplex Method 对偶问题</li>
+<li>Duality and Sensitivity Analysis 灵敏度分析</li>
+<li>Interior Point Method 内点算法 -- 多项式算法 -- 其他的算法</li>
+<li>Related Topics</li>
 </ol>
-<p><span class="math display">\[\frac{\partial u}{\partial t}
-= h^2 \left( \frac{\partial^2 u}{\partial x^2} +
-\frac{\partial^2 u}{\partial y^2} +
-\frac{\partial^2 u}{\partial z^2}\right)\]</span></p>
-<h2 id="why-to-study-linear-programming">Why to study Linear Programming</h2>
-<h2 id="how-to-study-linear-programming">How to study Linear Programming</h2>
-<h2 id="history-to-study-linear-programming">History to study Linear Programming</h2>
-<h2 id="how-to-slove-an-lp-problem">How to slove an LP problem</h2>
-<h2 id="where-to-go">Where to go</h2>
 
         </div>
 
@@ -271,7 +230,7 @@
                 
                     <p class="copyright-item">
                         <span>Permalink:</span>
-                        <span><a href="http://yoursite.com/2020/03/05/LinearOptimization01/">http://yoursite.com/2020/03/05/LinearOptimization01/</a></span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/05/LinearOptimizationNote00/">http://blog.torpedostudio.cn/2020/03/05/LinearOptimizationNote00/</a></span>
                     </p>
                 
                 
@@ -280,11 +239,6 @@
                         <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
                     </p>
                 
-                
-                     <p class="copyright-item">
-                         <span>Slogan:</span>
-                         <span>Do you believe in <strong>DESTINY</strong>?</span>
-                     </p>
                 
 
             </section>
@@ -305,7 +259,7 @@
         <section class="post-nav">
             
             
-            <a class="next" rel="next" href="/2020/03/05/LinearOptimization00/">LinearOptimization00</a>
+            <a class="next" rel="next" href="/2020/03/05/%E5%95%86%E5%8A%A1%E6%99%BA%E8%83%BD/">商务智能</a>
             
         </section>
 
