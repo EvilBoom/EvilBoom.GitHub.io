@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zby">
+
+
+    <meta name="subtitle" content="Life is a "Present"">
+
+
+
+    <meta name="keywords" content="NLP">
+
+
+<title>LinearOptimizationNote 02 - Preliminaries，解决线性优化问题的预热 | Torpedostudio</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+            <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+    });
+</script>
+<!-- 给MathJax元素添加has-jax class -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<!-- 通过连接CDN加载MathJax的js代码 -->
+<script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"><!-- hexo-inject:begin --><!-- hexo-inject:end --></head>
+<body>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">TorpedoStudio</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">TorpedoStudio</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">LinearOptimizationNote 02 - Preliminaries，解决线性优化问题的预热</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zby</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 6, 2020&nbsp;&nbsp;22:01:37</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="standard-form-lplp-问题的标准化">Standard form LP，LP 问题的标准化</h2>
+<h3 id="key-elements----完整形式-explicit-form">1. Key elements -- 完整形式 Explicit form</h3>
+<ul>
+<li>n（有限finite）个决策变量 <span class="math display">\[x_1,x_2,\dots,x_n\]</span></li>
+<li>1（只能一个，多个就不是线性优化了）个 objective function：（无常数项） <span class="math display">\[z = c_1x_1+c_2x_2+\dots+c_nx_n\]</span></li>
+<li>m（有限finite）个线性约束 <span class="math display">\[a_{11}x_1+a_{12}x_2+ \dots +a_{1n}x_n &gt;|=|&lt; b_1\]</span> <span class="math display">\[a_{21}x_1+a_{22}x_2+ \dots +a_{2n}x_n &gt;|=|&lt; b_2\]</span> <span class="math display">\[\dots\]</span> <span class="math display">\[a_{m1}x_1+a_{m2}x_2+ \dots +a_{mn}x_n &gt;|=|&lt; b_m\]</span></li>
+<li>non-negativity requirements: <span class="math display">\[x_1\geq 0,x_2 \geq 0,\dots,x_n \geq 0\]</span></li>
+<li>代表第一象限，也就是能形成个锥</li>
+</ul>
+<h3 id="矩阵形式-matrix-form">2. 矩阵形式 Matrix form</h3>
+<ol type="1">
+<li>把c拿出来就是cost vector，把x拿出来就是solution vector，把常数项拿出来就是right-hand-side vector
+<ul>
+<li>cost vector <span class="math display">\[
+  c = \left[\begin{matrix}
+  c_1\\
+  c_2\\
+  \vdots\\
+  c_n
+  \end{matrix}\right]\tag{1}
+  \]</span></li>
+<li>solution vector <span class="math display">\[
+  x = \begin{bmatrix}
+  x_1\\
+  x_2\\
+  \vdots\\
+  x_n
+  \end{bmatrix} \tag{2}
+  \]</span></li>
+<li>right-hand-side vector <span class="math display">\[
+  b = \begin{bmatrix}
+  b_1\\
+  b_2\\
+  \vdots\\
+  b_n
+  \end{bmatrix} \tag{3}
+  \]</span></li>
+</ul></li>
+<li>把所有的参数拿出来就是Constraint matrix <span class="math display">\[
+     A = \begin{bmatrix}
+     a_{11} &amp; a_{12} &amp; \cdots &amp; a_{1n}\\
+     a_{21} &amp; a_{22} &amp; \cdots &amp; a_{2n}\\
+     \vdots &amp; \vdots &amp; \ddots &amp; \vdots\\
+     a_{m1} &amp; a_{m2} &amp; \cdots &amp; a_{mn}
+     \end{bmatrix} \tag{4}
+     \]</span></li>
+<li>简写为：(把向量相乘) <span class="math display">\[
+     Min c^Tx\\
+     s.t. Ax = b\\
+     x \geq 0
+     \]</span></li>
+</ol>
+<h3 id="example-运输问题---a-management-question">3. Example 运输问题 - A management question</h3>
+<ol type="1">
+<li>怎么样用最经济的方法满足需求
+<ul>
+<li><p>Suuply 供应商</p>
+<table>
+<thead>
+<tr class="header">
+<th>supply</th>
+<th>tons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NC</td>
+<td>4000</td>
+</tr>
+<tr class="even">
+<td>OK</td>
+<td>3000</td>
+</tr>
+<tr class="odd">
+<td>IO</td>
+<td>2500</td>
+</tr>
+<tr class="even">
+<td>VA</td>
+<td>1500</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Demand 需求地区</p>
+<table>
+<thead>
+<tr class="header">
+<th>demand</th>
+<th>tons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NY</td>
+<td>5000</td>
+</tr>
+<tr class="even">
+<td>LA</td>
+<td>2000</td>
+</tr>
+<tr class="odd">
+<td>DC</td>
+<td>4000</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Cost 运送费用</p>
+<table>
+<thead>
+<tr class="header">
+<th>cost</th>
+<th>NY</th>
+<th>LA</th>
+<th>DC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NC</td>
+<td>30</td>
+<td>10</td>
+<td>40</td>
+</tr>
+<tr class="even">
+<td>OK</td>
+<td>15</td>
+<td>20</td>
+<td>60</td>
+</tr>
+<tr class="odd">
+<td>IO</td>
+<td>60</td>
+<td>35</td>
+<td>25</td>
+</tr>
+<tr class="even">
+<td>VA</td>
+<td>5</td>
+<td>45</td>
+<td>75</td>
+</tr>
+</tbody>
+</table></li>
+</ul></li>
+<li>LP Model
+<ul>
+<li>目标函数和约束条件依赖决策变量 &amp;&amp; 目标函数与约束条件之间相互独立，所以第一步先定决策变量
+<ul>
+<li>step 1: 决策变量包括哪些？</li>
+<li>step 2: 目标函数是什么？</li>
+<li>step 3: 约束条件是什么？</li>
+</ul></li>
+<li>Formulation
+<ul>
+<li><p>Variables 12个决策变量</p>
+<table>
+<thead>
+<tr class="header">
+<th>cost</th>
+<th>NY</th>
+<th>LA</th>
+<th>DC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NC</td>
+<td><span class="math inline">\(x_{11}\)</span></td>
+<td><span class="math inline">\(x_{12}\)</span></td>
+<td><span class="math inline">\(x_{13}\)</span></td>
+</tr>
+<tr class="even">
+<td>OK</td>
+<td><span class="math inline">\(x_{21}\)</span></td>
+<td><span class="math inline">\(x_{22}\)</span></td>
+<td><span class="math inline">\(x_{23}\)</span></td>
+</tr>
+<tr class="odd">
+<td>IO</td>
+<td><span class="math inline">\(x_{31}\)</span></td>
+<td><span class="math inline">\(x_{32}\)</span></td>
+<td><span class="math inline">\(x_{33}\)</span></td>
+</tr>
+<tr class="even">
+<td>VA</td>
+<td><span class="math inline">\(x_{41}\)</span></td>
+<td><span class="math inline">\(x_{42}\)</span></td>
+<td><span class="math inline">\(x_{43}\)</span></td>
+</tr>
+</tbody>
+</table></li>
+<li><p>Objective function 1个目标函数 <span class="math display">\[
+  z = 30x_{11}+10x_{12}+40x_{13}\\
+      +15x_{21}+20x_{22}+60x_{23}\\
+      +60x_{31}+35x_{32}+25x_{33}\\
+      +5x_{41}+45x_{42}+75x_{43}
+  \]</span></p></li>
+<li><p>Constraints 7个约束条件</p>
+<ul>
+<li>supply side 供应商方面可得到 <span class="math display">\[
+  x_{11}+x_{12}+x_{13} = 4000\\
+  x_{21}+x_{22}+x_{23} = 3000\\
+  x_{31}+x_{32}+x_{33} = 2500\\
+  x_{41}+x_{42}+x_{43} = 1500
+  \]</span></li>
+<li>demand side 需求方可得到 <span class="math display">\[
+  x_{11}+x_{21}+x_{31}+x_{41}= 5000\\
+  x_{12}+x_{22}+x_{32}+x_{42}= 2000\\
+  x_{13}+x_{23}+x_{33}+x_{43}= 4000
+  \]</span></li>
+</ul></li>
+</ul></li>
+<li>LP model in standard form <span class="math display">\[
+  Minimize\,z = 30x_{11}+10x_{12}+40x_{13}\\
+          +15x_{21}+20x_{22}+60x_{23}\\
+          +60x_{31}+35x_{32}+25x_{33}\\
+          +5x_{41}+45x_{42}+75x_{43}
+  \]</span> <span class="math display">\[
+  subject\,to:\\
+  x_{11}+x_{12}+x_{13} = 4000\\
+  x_{21}+x_{22}+x_{23} = 3000\\
+  x_{31}+x_{32}+x_{33} = 2500\\
+  x_{41}+x_{42}+x_{43} = 1500\\
+  x_{11}+x_{21}+x_{31}+x_{41}= 5000\\
+  x_{12}+x_{22}+x_{32}+x_{42}= 2000\\
+  x_{13}+x_{23}+x_{33}+x_{43}= 4000\\
+  x_{11}+x_{12}+\dots+x_{33}+x_{43} \geq 0
+  \]</span>
+<ul>
+<li>constraints 中拿掉一个不会影响</li>
+</ul></li>
+</ul></li>
+</ol>
+<h2 id="embedded-assumptions问题隐含的假设">Embedded assumptions，问题隐含的假设</h2>
+<h3 id="proportionality-assumption-成比例比例维持一定">1. Proportionality Assumption 成比例（比例维持一定）</h3>
+<ul>
+<li>No discount 不存在折扣</li>
+<li>No economy of return for sale</li>
+</ul>
+<h3 id="additivity-assumption-决策变量的贡献用加法来计算">2. Additivity Assumption 决策变量的贡献用加法来计算</h3>
+<ul>
+<li>总贡献 = 所有单独变量的贡献的和</li>
+</ul>
+<h3 id="divisibility-assumption-可细分的">3. Divisibility Assumption 可细分的</h3>
+<ul>
+<li>Any fractional value is allowed 所有的值都是可以细分的
+<ul>
+<li>当然像人这种是不可以分的</li>
+</ul></li>
+</ul>
+<h3 id="certainty-assumption-确定的性的">4. Certainty Assumption 确定的性的</h3>
+<ul>
+<li>当在解问题之前，每一个参数c,a,b都已知，也就是确定性的了
+<ul>
+<li>例如如果价格，需要随着时间上下起伏，那就不是线性规划了</li>
+</ul></li>
+</ul>
+<h2 id="converting-to-standard-form转化成标准化的-lp-问题">Converting to standard form，转化成标准化的 LP 问题</h2>
+<h3 id="example">1. Example</h3>
+<ul>
+<li><span class="math inline">\(Maximize \quad 3x_1 - 2x_2 - 4|x_3|\)</span></li>
+</ul>
+<p><span class="math display">\[
+s.t.\\
+-x_1+2x_2  \leq -5\\
+3x_2-x_3 \geq 6\\
+2x_1+x3=12\\
+x_1,x_2 \geq 0
+\]</span></p>
+<h3 id="观察例子">2. 观察例子</h3>
+<ol type="1">
+<li>有3个决策变量，是有限的，但并不全是非负的</li>
+<li>constraints 是有限个的，是线性的式子，但是 和 不符合规定</li>
+<li>目标函数中有个绝对值|x|，不是线性的，绝对值可以看作两段线性</li>
+<li>给定的Maximize 我们要 Minimize</li>
+<li>== 似乎是两段的线性优化</li>
+</ol>
+<h3 id="fix">3. Fix</h3>
+<ul>
+<li>Rule1: 对任意一个free variables，可分为两部分
+<ul>
+<li><p><span class="math inline">\(x_i \in R\)</span></p>
+<p><span class="math display">\[
+x_i^+ = \begin{cases}
+x_i,\quad if \quad x_i  \geq  0\\
+0,\quad otherwise
+\end{cases}
+x_i^- = \begin{cases}
+0,\quad if \quad x_i \geq 0\\
+-x_i,\quad otherwise
+\end{cases}
+\]</span></p></li>
+<li><p><span class="math inline">\(x_i = x_i^+ - x_i^-\)</span> 一个数可以分为正的部分减去负的部分</p></li>
+<li><p><span class="math inline">\(x_i^-,\quad x_i^+ \geq0\)</span></p></li>
+<li><p><strong>Potential problem: 满足</strong> <span class="math inline">\(x_i^+ \times x_i^- =0\)</span>，两个中间一定有一个零，其实是一个二次的constraint</p></li>
+<li><p>绝对值：<span class="math inline">\(|x_i|=x_i^++x_i^-\)</span></p></li>
+<li><p>得到 ===&gt;</p>
+<ul>
+<li><p><span class="math inline">\(Maximize \quad 3x_1 - 2x_2 - 4x_3^+-4x_3^-\)</span></p>
+<p><span class="math display">\[
+  s.t.\\
+  -x_1+2x_2  \leq -5\\
+  3x_2-(x_3^+-x_3^-)\geq6\\
+  2x_1+(x_3^+-x_3^-)=12\\
+  x_1,x_2&gt;,x_i^+,x_i^-\geq0
+  \]</span></p></li>
+</ul></li>
+</ul></li>
+<li>Rule2: Inequality constraints 多所有不是=的约束
+<ul>
+<li>slack variable 松弛变量 <span class="math display">\[
+a_{i1}x_1+a_{i2}x_2+\dots+a_{in}x_n\quad\quad \leq b_i\\
+\Downarrow add\quad a\quad slack\quad variable\quad s_i \geq 0\\
+a_{i1}x_1+a_{i2}x_2+\dots+a_{in}x_n+s_i\quad \leq b_i
+\]</span></li>
+<li>excess variable 减去多余变量 <span class="math display">\[
+a_{i1}x_1+a_{i2}x_2+\dots+a_{in}x_n\quad\quad \geq b_i\\
+\Downarrow add\quad a\quad excess\quad variable\quad c_i \geq 0\\
+a_{i1}x_1+a_{i2}x_2+\dots+a_{in}x_n-c_i\quad \geq b_i
+\]</span></li>
+<li>得到 ===&gt;
+<ul>
+<li><p><span class="math inline">\(Maximize \quad 3x_1 - 2x_2 - 4x_3^+-4x_3^-\)</span></p>
+<p><span class="math display">\[
+  s.t.\\
+  -x_1+2x_2+x_4 = -5\\
+  3x_2-(x_3^+-x_3^-)-x_5 = 6\\
+  2x_1+(x_3^+-x_3^-)=12\\
+  x_1,x_2&gt;,x_i^+,x_i^-,x_4,x_5\geq 0
+  \]</span></p></li>
+</ul></li>
+</ul></li>
+<li>Rule3: Minimization of the objective function
+<ul>
+<li><span class="math inline">\(Max\quad c_1x_1+c_2x_2+\dots+c_nx_n\)</span></li>
+<li>pic 本子</li>
+<li>关于x轴对称 <span class="math inline">\(Max(c^Tx) = -Min(-c^Tx)\)</span></li>
+<li>得到 ===&gt; min前面加（-）表示是从max 过来的，最后求值还要加负号
+<ul>
+<li><p><span class="math inline">\((-)Minimize \quad -3x_1 + 2x_2 + 4x_3^++4x_3^-\)</span></p>
+<p><span class="math display">\[
+  s.t.\\
+  -x_1+2x_2  \leq -5\\
+  3x_2-(x_3^+-x_3^-)\geq6\\
+  2x_1+(x_3^+-x_3^-)=12\\
+  x_1,x_2&gt;,x_i^+,x_i^-\geq0
+  \]</span></p></li>
+</ul></li>
+</ul></li>
+<li>最终：More on free variable and absolute value
+<ol type="1">
+<li>有一个约束忘掉了，<span class="math inline">\(x_i^+ \times x_i^- =0\)</span></li>
+<li>增加了维度</li>
+<li>一个解变成了无数多个解：如果缺了约束=&gt; 5=5-0=8-3=7-2</li>
+<li>绝对值函数|x|是一个凸函数（convex），凸函数可以求最小值Min，如果是求Max，-|x|是一个凹函数（concave）</li>
+<li>如果是 Maximize c|x| 中的c是正的，凸函数无法求出Max值</li>
+</ol></li>
+</ul>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zby</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/06/LinearOptimizationNote02/">http://blog.torpedostudio.cn/2020/03/06/LinearOptimizationNote02/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/LP/"># LP</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/03/05/%E5%95%86%E5%8A%A1%E6%99%BA%E8%83%BD/">商务智能</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zby | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>
