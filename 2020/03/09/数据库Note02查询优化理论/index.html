@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zby">
+
+
+    <meta name="subtitle" content="Life is a "Present"">
+
+
+
+    <meta name="keywords" content="NLP">
+
+
+<title>数据库Note02查询优化理论 | Torpedostudio</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+            <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+    });
+</script>
+<!-- 给MathJax元素添加has-jax class -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<!-- 通过连接CDN加载MathJax的js代码 -->
+<script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"><!-- hexo-inject:begin --><!-- hexo-inject:end --></head>
+<body>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">TorpedoStudio</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">TorpedoStudio</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">数据库Note02查询优化理论</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zby</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 9, 2020&nbsp;&nbsp;19:31:04</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="查询编译器">查询编译器</h2>
+<ol type="1">
+<li>查询编译过程
+<ul>
+<li>查询分析
+<ul>
+<li>词法分析</li>
+<li>语法分析</li>
+<li>语义分析</li>
+</ul></li>
+<li>查询检查
+<ul>
+<li>合法权检查</li>
+<li>完整性检查</li>
+<li>视图转换</li>
+</ul></li>
+<li>查询优化</li>
+</ul></li>
+</ol>
+<h2 id="语法分析和预处理">语法分析和预处理</h2>
+<h3 id="语法分析树">语法分析树</h3>
+<ol type="1">
+<li>不同DBMS的语法树形式不尽相同，但都比较相似
+<ul>
+<li>在《数据库系统实现》一书中，语法分析树的结点有如下两类
+<ul>
+<li>原子：词法成份。表示方法：直接表示。
+<ul>
+<li>原子：词法成份。表示方法：直接表示。
+<ul>
+<li>关键字(SELECT，FROM，……)</li>
+<li>关系名</li>
+<li>属性名</li>
+<li>常数</li>
+<li>括号</li>
+<li>操作符</li>
+</ul></li>
+</ul></li>
+<li>语法类：查询子成份。表示方法：用尖括号括起
+<ul>
+<li>如：
+<ul>
+<li>&lt;Query&gt; 用于表示常用select-from-where形式的查询</li>
+<li>&lt;Condition&gt;用于表示属于条件的任何表达式。</li>
+<li>&lt;SelList&gt;用于表示跟在SELECT之后的列表。</li>
+<li>&lt;FromList&gt;用于表示跟在FROM之后的列表。</li>
+<li>如果结点是一个原子，则该结点没有子结点。若结点是一个语法类，则其子结点通过该语言的语法规则之一进行描述。</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>SQL的一个简单子集的语法
+<ul>
+<li>基本语法类
+<ul>
+<li>&lt;RelName&gt; 表示可以被当前模式中作为关系而言任何有意义的字符串所替代。</li>
+<li>&lt;Pattern&gt;表示可以用任何一个用引号括起来的字符串替换，该字符串是一个合法的SQL匹配模式。</li>
+<li>&lt;Attribute&gt;表示它的一个子类可以是任意的字符串，该字符串表示一个当前数据库模式的属性。</li>
+<li>上述语法类不是通过语法规则定义的，而是通过他们所代表的原子规则来定义的。</li>
+</ul></li>
+<li>查询
+<ul>
+<li>&lt;Query&gt;::=&lt;SFW&gt;</li>
+<li>&lt;Query&gt;::=( &lt;Query&gt; )
+<ul>
+<li>符号“::=”表示“可以表述为”</li>
+</ul></li>
+<li>Slect-From-Where形式
+<ul>
+<li>&lt;SFW&gt;::=SELECT &lt;SelList&gt;</li>
+<li>FROM &lt;FromList&gt;</li>
+<li>WHERE &lt;Condition&gt;</li>
+<li>注意：这条规则不接受多种可选子句，如GROUP BY,HAVING或ORDER BY；也不接受SELECT之后的DISTINCT选项；也不接受使用UNION,JOIN或者其他二元操作符的查询表达式。</li>
+</ul></li>
+</ul></li>
+<li>Select列表
+<ul>
+<li>&lt;SelList&gt;::=&lt;Attribute&gt; &lt;SelList&gt;</li>
+<li>&lt;SelList&gt;::=&lt;Attribute&gt;</li>
+<li>这两条规则表示一个选择列表可为任何由逗号分隔的属性列表。</li>
+</ul></li>
+<li>From列表
+<ul>
+<li>&lt;FromList&gt;::=&lt;RelName&gt;, &lt;FromList&gt;</li>
+<li>&lt;FromList&gt;::=&lt;RelName&gt;</li>
+<li>这两条规则表示可由任何逗号分隔的关系列表。</li>
+</ul></li>
+<li>条件
+<ul>
+<li>&lt;Condition&gt;::::=&lt;Condition&gt; AND &lt;Condition&gt;</li>
+<li>&lt;Condition&gt;::=&lt;Tuple&gt; IN &lt;Query&gt;</li>
+<li>&lt;Condition&gt;::=&lt;Attribute&gt; = &lt;Attribute&gt;</li>
+<li>&lt;Condition&gt;::=&lt;Attribute&gt; LIKE &lt;Pattern&gt;</li>
+<li>&lt;Tuple&gt;::=&lt;Attribute&gt;</li>
+</ul></li>
+</ul></li>
+<li><strong>语法分析树举例</strong>(会写语句，会画语法树)
+<ul>
+<li><p>关系模式</p>
+<ul>
+<li>StarsIn(title,year, starName))</li>
+<li>MovieStar(name, address, gender, birthdate)</li>
+<li>查询有出生于1960年的影星的电影</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> title <span class="keyword">from</span> starsin a, moviestar m</span><br><span class="line"><span class="keyword">where</span> a.starname=m.name</span><br><span class="line"><span class="keyword">and</span> <span class="keyword">datepart</span>(yy,birthdate)=<span class="string">'1960'</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> title <span class="keyword">from</span> starsin</span><br><span class="line"><span class="keyword">where</span> starname <span class="keyword">in</span>(</span><br><span class="line">    <span class="keyword">select</span> <span class="keyword">name</span> <span class="keyword">from</span> moviestar</span><br><span class="line">    <span class="keyword">where</span> <span class="keyword">datepart</span>(yy,birthdate)=<span class="string">'1960'</span>)</span><br></pre></td></tr></table></figure></p></li>
+<li><figure>
+<img src="https://res.cloudinary.com/torpedostudio/image/upload/v1583755981/hexo/%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90%E6%A0%911_aouzdb.png" alt="" /><figcaption>语法分析树1</figcaption>
+</figure></li>
+<li><p>stay</p></li>
+</ul></li>
+</ol>
+<h3 id="预处理器">预处理器</h3>
+<ol type="1">
+<li>预处理器有多个重要的功能，其一是负责语义检查。
+<ul>
+<li>语义检查的主要内容
+<ul>
+<li>检查关系的使用</li>
+<li>FROM子句中出现的关系必须是该查询所对应模式中的关系或视图。</li>
+</ul></li>
+<li>检查与解析属性的使用
+<ul>
+<li>在SELECT子句或WHERE子句中出现的各个属性必须是FROM子句中某个关系或视图的属性</li>
+<li>当FROM子句中有多个关系(视图)时，往往通过给属性加上它所引用的关系名来解析每个属性，同时检查二义性。</li>
+</ul></li>
+<li>检查类型
+<ul>
+<li>所有属性的类型必须与其使用相适应</li>
+</ul></li>
+</ul></li>
+<li>预处理器另一个功能是视图引用的预处理。
+<ul>
+<li>视图转换的两类方法
+<ul>
+<li>视图消解
+<ul>
+<li>在from列表中有用到视图的地方，用描述该视图的语法树来替换。该语法树由视图的定义得到。</li>
+</ul></li>
+<li>实体化视图
+<ul>
+<li>from列表中引用视图时，生成新的查询，该查询将视图实体化为临时表</li>
+<li>在from列表中用到视图的地方用该临时表替换。</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>用于改进查询计划的代数定律
+<ul>
+<li>常用的等价变换规则：</li>
+</ul>
+<ol type="1">
+<li>连接、笛卡尔积交换律
+<ul>
+<li>设E1和E2是关系代数表达式，F是连接运算的条件，则有
+<ul>
+<li><span class="math inline">\(E_1\bowtie E_2≡E_2\bowtie E_1\)</span></li>
+<li><span class="math inline">\(E_1\bowtie E_2=E_2\bowtie E_1\)</span></li>
+<li><span class="math inline">\(E_1\bowtie E_2≡E_2\bowtie E_1\)</span></li>
+</ul></li>
+</ul></li>
+<li>连接、笛卡尔积的结合律
+<ul>
+<li>设E1，E2，E3是关系代数表达式，F1和F2是连接运算的条件，则有
+<ul>
+<li><span class="math inline">\((E_1\bowtie E_2)\bowtie E_3= E_1\bowtie (E_2\bowtie E_3)\)</span></li>
+<li><span class="math inline">\((E_1\bowtie E_2)\bowtie E_3= E_1\bowtie (E_2\bowtie E_3)\)</span></li>
+<li><span class="math inline">\((E_1\bowtie E_2)\bowtie E_3= E_1\bowtie (E_2\bowtie E_3)\)</span></li>
+</ul></li>
+</ul></li>
+<li>投影的串接定律
+<ul>
+<li>((E))≡(E)</li>
+<li>这里，E是关系代数表达式，Ai(i=1，2，…，n)，Bj(j=1，2，…，m)是属性名且{A1，A2，…，An}构成{B1，B2，…，Bm}的子集。</li>
+</ul></li>
+<li>选择的串接定律
+<ul>
+<li>((E))≡ (E)</li>
+<li>这里，E是关系代数表达式，F1、F2是选择条件。</li>
+<li>选择的串接律说明选择条件可以合并。这样一次就可检查全部条件。</li>
+</ul></li>
+<li>选择与投影操作的交换律
+<ul>
+<li>σF((E))≡ (σF(E))</li>
+<li>选择条件F只涉及属性A1，…，An。</li>
+<li>若F中有不属于A1，…，An的属性B1，…，Bm则有更一般的规则：</li>
+<li>(σF(E))≡(σF((E)))</li>
+</ul></li>
+<li>选择与笛卡尔积的交换律
+<ul>
+<li>如果F中涉及的属性都是E1中的属性，则
+<ul>
+<li>(E1×E2)≡ (E1)×E2</li>
+</ul></li>
+<li>如果F=F1∧F2，并且F1只涉及E1中的属性，F2只涉及E2中的属性，则由上面的等价变换规则1，4，6可推出：
+<ul>
+<li>(E1×E2)≡(E1)×(E2)</li>
+</ul></li>
+<li>若F1只涉及E1中的属性，F2涉及E1和E2两者的属性，则仍有
+<ul>
+<li>(E1×E2)≡((E1)×E2)</li>
+</ul></li>
+<li>它使部分选择在笛卡尔积前先做。</li>
+</ul></li>
+<li>选择与并的分配律
+<ul>
+<li>设E=E1∪E2，E1，E2有相同的属性名，则</li>
+<li>σF(E1∪E2)≡σF(E1)∪σF(E2)</li>
+</ul></li>
+<li>选择与差运算的分配律
+<ul>
+<li>若E1与E2有相同的属性名，则</li>
+<li>σF(E1-E2)≡σF(E1)-σF(E2)</li>
+</ul></li>
+<li>选择对自然连接的分配律
+<ul>
+<li>σF(E1E2)≡σF(E1)σF(E2)</li>
+<li>F只涉及E1与E2的公共属性</li>
+</ul></li>
+<li>投影与笛卡尔积的分配律
+<ul>
+<li>设E1和E2是两个关系表达式，A1，…，An是E1的属性，B1，…，Bm是E2的属性，则</li>
+<li>(E1×E2)=(E1)×(E2)</li>
+</ul></li>
+<li>投影与并的分配律
+<ul>
+<li>设E1和E2有相同的属性名，则</li>
+<li>(E1∪E2)≡(E1)∪(E2)</li>
+</ul></li>
+</ol>
+<ul>
+<li>说明：
+<ul>
+<li>规则只说明两个表达式等价，并不说明哪一个更好。</li>
+<li>连接的次序很重要，好的连接次序序列产生小的中间结果。</li>
+<li>规则的使用会产生大量的等价表达式，优化器要采用适当的技术来减少所产生的表达式的数量。</li>
+</ul></li>
+</ul></li>
+<li>从语法分析树到逻辑查询计划
+<ul>
+<li><strong>逻辑优化掌握转换成代数表达式树</strong>
+<ul>
+<li>将语法分析树转换为关系代数表达式树
+<ul>
+<li>将SFW结构转换成关系代数</li>
+<li>处理子查询</li>
+</ul></li>
+</ul></li>
+<li>变换关系代数，生成优化的逻辑计划</li>
+<li>将语法分析树转换为关系代数表达式树
+<ol type="1">
+<li>将SFW结构转换成关系代数表达式
+<ul>
+<li>如果有一个属于&lt;SFW&gt;成份的&lt;Query&gt;，并该成份中的&lt;Condition&gt;没有子查询，则可以用一个关系代数表达式来替换整个&lt;SFW&gt;。</li>
+<li>&lt;FromList&gt; ：用关系或关系的积替换。((底层))</li>
+<li>WHERE &lt;Condition&gt;：选择 σC (中层)</li>
+<li>&lt;SelList&gt;：投影πL (高层</li>
+</ul></li>
+<li>处理子查询 （从条件中去除子查询）
+<ul>
+<li>对于&lt;Condition&gt;中包含子查询的语法树，引入运算符的中间形式，它介于语法分析树的语法类与作用到关系上的关系代数运算符之间，该运算符通常被称为<em>两参数选择</em>。</li>
+<li>第一步：用两参数选择重写语法分析树
+<ul>
+<li>左子结点：表示要对其做选择操作的关系R</li>
+<li>右子结点：表示作用到关系R的每个元组上的条件表达式</li>
+<li>两个参数均可表示为分析树、表达式树</li>
+<li>pic</li>
+<li>用不带参数的标签为的结点表示经转换后的语法树中的两参数选择。该结点之下有一个左子结点，它表示要对其做选择运算的关系R，还有一个右子结点，它表示作用到关系R的每个元组上的条件表达式。</li>
+</ul></li>
+<li>第二步：从两参数选择中消除子查询
+<ol type="1">
+<li>对于不相关子查询（以 t IN S为例）
+<ul>
+<li>用S的表达式树替换&lt;Condition&gt;。如果S有重复值，则在S的表达式根部加一个δ 。</li>
+<li>用一个单参数选择σC替换两参数选择，其中C是元组t的每个分量与关系S中相应属性取等值的条件。</li>
+<li>给 σC一个参数，它是R与S的积 。</li>
+<li>pic</li>
+</ul></li>
+<li>对于相关子查询
+<ul>
+<li><p>例：查询在制作影片时影星平均年龄不超过40岁的电影</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> m1.title, m1.year</span><br><span class="line"><span class="keyword">FROM</span> StarsIIn m1</span><br><span class="line"><span class="keyword">WHERE</span> m1.year<span class="number">-40</span>&lt;=(</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">AVG</span>(birthdate)</span><br><span class="line">    <span class="keyword">FROM</span> StarsIn m2, MovieStar s</span><br><span class="line">    <span class="keyword">WHERE</span> m2.starName=S.name <span class="keyword">AND</span></span><br><span class="line">        m1.title=m2.title <span class="keyword">AND</span></span><br><span class="line">        m1.year=m2.year);</span><br></pre></td></tr></table></figure></p></li>
+</ul></li>
+</ol></li>
+</ul></li>
+</ol></li>
+</ul></li>
+</ol>
+<h2 id="用于改进查询计划的代数定律">用于改进查询计划的代数定律</h2>
+<h2 id="从语法分析树到逻辑查询计划">从语法分析树到逻辑查询计划</h2>
+<h2 id="运算代价的估算">运算代价的估算</h2>
+<h2 id="基于代价的计划选择">基于代价的计划选择</h2>
+<h2 id="连接顺序的选择">连接顺序的选择</h2>
+<h2 id="物理查询计划选择的完成">物理查询计划选择的完成</h2>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zby</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E7%90%86%E8%AE%BA/">http://blog.torpedostudio.cn/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E7%90%86%E8%AE%BA/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E5%BA%94%E7%94%A8/">数据库Note02查询优化</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zby | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

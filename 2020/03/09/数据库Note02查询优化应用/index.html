@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zby">
+
+
+    <meta name="subtitle" content="Life is a "Present"">
+
+
+
+    <meta name="keywords" content="NLP">
+
+
+<title>数据库Note02查询优化 | Torpedostudio</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"><!-- hexo-inject:begin --><!-- hexo-inject:end --></head>
+<body>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">TorpedoStudio</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">TorpedoStudio</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">数据库Note02查询优化</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zby</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 9, 2020&nbsp;&nbsp;16:17:20</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="概述">概述</h2>
+<ol type="1">
+<li>查询优化的必要性
+<ul>
+<li>如果在数据量很大的情况下快速的查询数据</li>
+</ul></li>
+<li>环境
+<ul>
+<li>如何在有1000万条数据的数据库中快速查询数据和数据分页</li>
+<li>think 1：如何实现1000万测试数据的添加？</li>
+<li>think 2：如何创建一个办公室信息表（主题，日期，发布用户，浏览用户），如何创建，如何建立索引。</li>
+</ul></li>
+<li>example
+<ul>
+<li>用的Tsql来写循环语句插入</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">decalre @i int</span><br><span class="line"><span class="keyword">set</span> @i =<span class="number">1</span></span><br><span class="line"><span class="keyword">while</span> @i&lt;=<span class="number">250000</span></span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">insert</span> A(a...) <span class="keyword">value</span>(a.....)</span><br><span class="line"><span class="comment">-- 插入语句</span></span><br><span class="line"><span class="keyword">set</span> @i = i+<span class="number">1</span></span><br><span class="line"><span class="keyword">End</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="建立适当的索引">建立“适当”的索引</h2>
+<ol type="1">
+<li>理解索引结构
+<ul>
+<li><p>索引就是一种特殊的目录</p>
+<ul>
+<li>e.g.例如sqlserver中提供了两种索引：聚集索引（clustered index，也称为聚类索引、簇集索引）和非聚集索引（nonclustered index，也称为非聚类索引、非簇集索引）
+<ul>
+<li>聚集索引：把正文内容本身就是一种按照一定规则排序的目录？？</li>
+<li>非聚集索引：把目录纯粹是目录，正文纯粹是正文的排序方式
+<ul>
+<li>e.g. 汉语字典的目录
+<ul>
+<li>查拼音是聚集索引（正文是按照拼音规则排序的）</li>
+<li>查笔画是非聚集索引（单独搞出了一个目录）</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><p>什么时候建立聚集索引或非聚集索引</p>
+<table>
+<thead>
+<tr class="header">
+<th>动作描述</th>
+<th>列经常被分组排序</th>
+<th>返回某范围内的数据</th>
+<th>一个或极少不同值</th>
+<th>小数目的不同值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>使用聚集索引</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+<tr class="even">
+<td>使用非聚集索引</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th>大数目的不同值</th>
+<th>频繁更新的列</th>
+<th>外键列</th>
+<th>主键列</th>
+<th>频繁修改索引项</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="even">
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>e.g. 返回某范围内的数据项
+<ul>
+<li>比如你的某个表有一个时间列，恰好你把聚合索引建立在了该列，这时您查询2004年1月1日至2004年10月1日之间的全部数据时，这个速度就将是很快的，因为您的这本字典正文是按日期进行排序的，聚类索引只需要找到要检索的所有数据中的开头和结尾数据即可；而不像非聚集索引，必须先查到目录中查到每一项数据对应的页码，然后再根据页码查到具体内容。</li>
+</ul></li>
+</ul></li>
+<li><p>索引使用的误区</p>
+<ul>
+<li>1.主键就是聚集索引吗？
+<ul>
+<li>ps：Sqlserver默认是在主键上建立聚集索引的</li>
+<li>聚集索引的优势很明显，每个表中只能有一个聚集索引的规则，这就使得聚集索引变得珍贵</li>
+<li>使用聚集索引的最大好处就是能够根据查询要求，迅速缩小查询的范围，避免全表扫描</li>
+<li>e.g.<em>用ID做主键并定义为聚集索引，情况会如何？</em>
+<ul>
+<li>ID号是自动生成，但是很少有这种根据ID来查询的需求，会造成浪费，所以尽量还是不要用ID做索引。</li>
+<li>也对应着上面表格的大数目的不同值不建议做聚集索引。</li>
+</ul></li>
+</ul></li>
+<li>试验测试数据结果（ID为主键，且结果都是25万条记录
+<ul>
+<li><p>仅在主键上建立聚集索引，并且不划分时间段：用时：128秒</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> tgongwen</span><br></pre></td></tr></table></figure></p></li>
+<li><p>在主键上建立聚集索引，在fariq上建立非聚集索引：用时：54秒</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fariqi&gt; <span class="keyword">dateadd</span>(<span class="keyword">day</span>,<span class="number">-90</span>,<span class="keyword">getdate</span>())</span><br></pre></td></tr></table></figure></p></li>
+<li><p>将聚合索引建立在日期列（fariqi）上：用时：2秒</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fariqi&gt; <span class="keyword">dateadd</span>(<span class="keyword">day</span>,<span class="number">-90</span>,<span class="keyword">getdate</span>())</span><br></pre></td></tr></table></figure></p></li>
+</ul></li>
+<li>2.只要建立索引就能显著提高查询速度吗？
+<ul>
+<li>分析可以发现上面的例子中发现，第2、3条语句完全相同，且建立索引的字段也相同；</li>
+<li>不同的仅是前者在fbrq字段上建立的是非聚合索引，后者在此字段上建立的是聚合索引，但查询速度却有着天壤之别。</li>
+<li>所以，<strong>并非是在任何字段上简单地建立索引就能提高查询速度</strong>。</li>
+<li>我们<strong>建立“适当”的聚合索引</strong>对于我们提高查询速度是非常重要的。</li>
+</ul></li>
+<li>3.把所有需要提高查询速度的字段都加到聚集索引中，以提高查询速度？
+<ul>
+<li><p>在进行数据查询时都离不开字段的是“日期”还有用户本身的“用户名”。</p></li>
+<li><p>(自然的）既然这两个字段都是如此的重要，我们可以把他们合并起来，建立一个复合索引</p></li>
+<li><p>思考:如果把复合的聚集索引字段分开查询，那么查询速度会减慢吗？</p></li>
+<li><p>e.g.</p>
+<ul>
+<li>带着这个问题，我们来看一下以下的查询速度（结果集都是25万条数据）：（日期列fbrq首先排在复合聚集索引的起始列，用户名fbyh排在后列）</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fbrq&gt;<span class="string">'2004-5-5'</span></span><br><span class="line"><span class="comment">-- 查询速度：2513毫秒</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fbrq&gt;‘<span class="number">2004</span><span class="number">-5</span><span class="number">-5</span>’ <span class="keyword">and</span> neibuyonghu=‘办公室‘</span><br><span class="line"><span class="comment">-- 查询速度：2512毫秒</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">id</span>,fbrq,fbyh,zt <span class="keyword">from</span> Tgongwen <span class="keyword">where</span> fbyh=‘办公室‘</span><br><span class="line"><span class="comment">-- 查询速度：20280毫秒</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>从以上试验中，我们可以看到如果仅用聚集索引的起始列作为查询条件和同时用到复合聚集索引的全部列的查询速度是几乎一样的，甚至比用上全部的复合索引列还要略快（在查询结果集数目一样的情况下）；</li>
+<li>而如果仅用复合聚集索引的非起始列作为查询条件的话，这个索引是不起任何作用的。当然，语句1、2的查询速度一样是因为查询的条目数一样，如果复合索引的所有列都用上，而且查询结果少的话，这样就会形成“索引覆盖”，因而性能可以达到最优。</li>
+<li><strong>请记住：无论您是否经常使用聚合索引的其他列，但其前导列一定要是使用最频繁的列。</strong></li>
+</ul></li>
+</ul></li>
+<li>4.其他经验
+<ul>
+<li>用聚合索引比用不是聚合索引的主键速度快（1/4）</li>
+<li>用聚合索引比用一般的主键作order by时速度快，特别是在小数据量情况下 (3/10)</li>
+<li>使用聚合索引内的时间段，搜索时间会按数据占整个数据表的百分比成比例减少，而无论聚合索引使用了多少个</li>
+<li>日期列不会因为有分秒的输入而减慢查询速度</li>
+</ul></li>
+<li>5.索引
+<ul>
+<li>“水可载舟，亦可覆舟”，索引也一样。索引有助于提高检索性能，但过多或不当的索引也会导致系统低效。</li>
+<li>因为用户在表中每加进一个索引，数据库就要做更多的工作。过多的索引甚至会导致索引碎片。</li>
+<li>所以说，我们要建立一个“适当”的索引体系，特别是对聚合索引的创建，更应精益求精，以使您的数据库能得到高性能的发挥。</li>
+<li>当然，在实践中，作为一个尽职的数据库管理员，您还要多测试一些方案，找出哪种方案效率最高、最为有效。</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>改善SQL语句
+<ul>
+<li><p>e.g.比较下列两个查询语句的不同点，说说谁查询看？</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> table1 <span class="keyword">where</span> <span class="keyword">name</span>=‘zhangsan’ <span class="keyword">and</span> tID &gt; <span class="number">10000</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> table1 <span class="keyword">where</span> tID &gt; <span class="number">10000</span> <span class="keyword">and</span></span><br><span class="line"><span class="keyword">name</span>=<span class="string">'zhangsan'</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>如果简单的从语句先后上看，这两个语句是不一样，如果tID是一个聚合索引，那么后一句仅仅从表的10000条以后的记录中查找就行了；而前一句则要先从全表中查找看有几个name='zhangsan'的，而后再根据限制条件条件tID&gt;10000来提出查询结果。</li>
+</ul></li>
+<li><p>查询优化器原理</p>
+<ul>
+<li><p>在查询分析阶段，查询优化器查看查询的每个阶段并决定限制需要扫描的数据量是否有用。</p></li>
+<li><p>如果一个阶段可以被用作一个扫描参数（SARG），那么就称之为可优化的，并且可以利用索引快速获得所需数据。</p>
+<ul>
+<li><p>SARG的定义：用于限制搜索的一个操作，因为它通常是指一个特定的匹配，一个值的范围内的匹配或者两个以上条件的AND连接。形式如下：</p>
+<p><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">列名   操作符 &lt;常数 或 变量&gt;</span><br><span class="line">或</span><br><span class="line">&lt;常数 或 变量&gt; 操作符   列名</span><br></pre></td></tr></table></figure></p></li>
+<li><p>列名可以出现在操作符的一边，而常数或变量出现在操作符的另一边。</p></li>
+<li><p>列名可以出现在操作符的一边，而常数或变量出现在操作符的另一边。例如：</p></li>
+</ul>
+<p><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Name=’张三’</span><br><span class="line">价格&gt;5000</span><br><span class="line">5000&lt;价格</span><br><span class="line">Name=’张三’ and 价格&gt;5000</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><p>如果一个表达式不能满足SARG的形式，那它就无法限制搜索的范围了，也就是SQL SERVER必须对每一行都判断它是否满足WHERE子句中的所有条件。所以一个索引对于不满足SARG形式的表达式来说是无用的。</p></li>
+<li><p>Like语句是否属于SARG取决于所使用的通配符的类型例如：</p>
+<ul>
+<li>name like ‘张%’ ，这就属于SARG</li>
+<li>name like ‘%张’ ,就不属于SARG。</li>
+<li>原因是通配符%在字符串的开通使得索引无法使用。</li>
+</ul></li>
+<li><p>or 会引起全表扫描</p>
+<ul>
+<li>Name=’张三’ and 价格&gt;5000 符合SARG，</li>
+<li>Name=’张三’ or 价格&gt;5000 则不符合SARG。使用or会引起全表扫描。</li>
+</ul></li>
+<li><p>非操作符、函数引起的不满足SARG形式的语句</p>
+<ul>
+<li>不满足SARG形式的语句最典型的情况就是包括非操作符的语句，如：NOT、!=、&lt;&gt;、!&lt;、!&gt;、NOT EXISTS、NOT IN、NOT LIKE等，另外还有函数。</li>
+<li>下面就是几个不满足SARG形式的例子：
+<ul>
+<li>ABS(价格)&lt;5000</li>
+<li>Name like ‘%三’</li>
+</ul></li>
+<li>思考：有哪些操作运算符？</li>
+</ul></li>
+<li><p>IN的作用相当于OR</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Select</span> * <span class="keyword">from</span> table1 <span class="keyword">where</span> tid <span class="keyword">in</span> (<span class="number">2</span>,<span class="number">3</span>)</span><br><span class="line"><span class="keyword">Select</span> * <span class="keyword">from</span> table1 <span class="keyword">where</span> tid=<span class="number">2</span> <span class="keyword">or</span> tid=<span class="number">3</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>是一样的，都会引起全表扫描，如果tid上有索引，其索引也会失效。</li>
+</ul></li>
+<li><p>e.g.</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> title,price <span class="keyword">from</span> titles</span><br><span class="line"><span class="keyword">where</span> title_id <span class="keyword">in</span> (</span><br><span class="line">    <span class="keyword">select</span> title_id <span class="keyword">from</span> sales</span><br><span class="line">    <span class="keyword">where</span> qty&gt;<span class="number">30</span>)</span><br><span class="line"><span class="comment">--表 'sales'。扫描计数 18，逻辑读 52 次，物理读 0 次，预读 0 次。</span></span><br><span class="line"><span class="comment">--表 'titles'。扫描计数 1，逻辑读 2 次，物理读 0 次，预读 0 次。</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> title,price <span class="keyword">from</span> titles</span><br><span class="line"><span class="keyword">where</span> <span class="keyword">exists</span> (</span><br><span class="line">    <span class="keyword">select</span> * <span class="keyword">from</span> sales</span><br><span class="line">    <span class="keyword">where</span> sales.title_id=titles.title_id <span class="keyword">and</span> qty&gt;<span class="number">30</span>)</span><br><span class="line"><span class="comment">--表 'sales'。扫描计数 18，逻辑读 52 次，物理读 0 次，预读 0 次。</span></span><br><span class="line"><span class="comment">--表 'titles'。扫描计数 1，逻辑读 2 次，物理读 0 次，预读 0 次。</span></span><br></pre></td></tr></table></figure></p></li>
+<li><p>用exists和用in的执行效率是一样的</p></li>
+<li><p><strong>尽量少用NOT</strong></p></li>
+<li><p>Union 并不绝对比or的执行效率高</p>
+<ul>
+<li>我们前面已经谈到了在where子句中使用or会引起全表扫描，一般的，我所见过的资料都是推荐这里用union来代替or。事实证明，这种说法对于大部分都是适用的。</li>
+<li>e.g.</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Select</span> <span class="keyword">id</span>,fbrq,fbyh,ydyh,zt <span class="keyword">from</span> Tgongwen <span class="keyword">where</span> fbrq=<span class="string">'2004-9-12'</span> <span class="keyword">or</span> gid&gt;<span class="number">9990000</span></span><br><span class="line"><span class="comment">--用时：28秒。扫描计数 1，逻辑读 404008 次，物理读 283 次，预读 392123 次。</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span>  <span class="keyword">id</span>,fbrq,fbyh,ydyh,zt  <span class="keyword">from</span> Tgongwen <span class="keyword">where</span> fbrq=<span class="string">'2004-9-12'</span></span><br><span class="line"><span class="keyword">union</span></span><br><span class="line"><span class="keyword">select</span> gid,fariqi,neibuyonghu,reader,title <span class="keyword">from</span> Tgongwen <span class="keyword">where</span> gid&gt;<span class="number">9990000</span></span><br><span class="line"><span class="comment">--用时：9秒。扫描计数 8，逻辑读 27489 次，物理读 212 次，预读 7499 次。</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>用union在通常情况下比用or的效率要高的多</li>
+<li>但经过试验，发现如果or两边的查询列是一样的话，那么用union则反倒和用or的执行速度差很多，虽然这里union扫描的是索引，而or扫描的是全表。</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span>  <span class="keyword">id</span>,fbrq,fbyh,ydyh,zt  <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fbrq=<span class="string">'2004-9-12'</span> <span class="keyword">or</span> fbrq=<span class="string">'2004-2-5'</span>　　</span><br><span class="line"><span class="comment">--用时：2423毫秒。扫描计数 2，逻辑读 14722 次，物理读 1 次，预读 7172 次。</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span>  <span class="keyword">id</span>,fbrq,fbyh,ydyh,zt  <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span> fbrq=<span class="string">'2004-9-12'</span></span><br><span class="line"><span class="keyword">union</span></span><br><span class="line"><span class="keyword">select</span> gid,fariqi,neibuyonghu,reader,title <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="keyword">where</span>  fbrq=<span class="string">'2004-2-5'</span></span><br><span class="line"><span class="comment">--用时：11240毫秒。扫描计数 8，逻辑读</span></span><br><span class="line"><span class="number">14802</span> 次，物理读 <span class="number">108</span> 次，预读 <span class="number">1144</span> 次。</span><br></pre></td></tr></table></figure></p></li>
+<li><p>字段提取要按照“需多少、提多少”的原则，避免“select *”</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zte</span><br><span class="line"><span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> <span class="keyword">id</span> <span class="keyword">desc</span></span><br><span class="line"><span class="comment">--用时：4273毫秒</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,zt <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> <span class="keyword">id</span> <span class="keyword">desc</span></span><br><span class="line"><span class="comment">--用时：1372毫秒</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> <span class="keyword">id</span> <span class="keyword">desc</span></span><br><span class="line"><span class="comment">--用时：80毫秒</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>由此看来，我们每少提取一个字段，数据的提取速度就会有相应的提升。提升的速度还要看您舍弃的字段的大小来判断。</li>
+</ul></li>
+<li><p>count(*)不比count(字段)慢</p>
+<ul>
+<li>一些资料上说：用*会统计所有列，显然要比一个具体列名效率低。这种说法其实是没有根据的。</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(*) <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="comment">--用时：1500毫秒</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(<span class="keyword">id</span>) <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="comment">--用时：1483毫秒</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(fbrq) <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="comment">--用时：3140毫秒</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(zt) <span class="keyword">from</span> Tgongwen</span><br><span class="line"><span class="comment">--用时：52050毫秒</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><p>从以上可以看出，如果用count(<em>)和用count(主键)的速度是相当的，而count(</em>)却比其他任何除主键以外的字段汇总速度要快，而且字段越长，汇总的速度就越慢。</p></li>
+<li><p>如果用count(*)， SQL SERVER可能会自动查找最小字段来汇总的。当然，如果您直接写count(主键)将会来的更直接些。</p></li>
+</ul></li>
+<li><p>order by按聚集索引列排序效率最高。</p>
+<ul>
+<li>id是主键，fbrq是聚合索引列</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zt <span class="keyword">from</span> tgongwen</span><br><span class="line"><span class="comment">--用时：192 毫秒。 扫描计数 1，逻辑读 289 次，物理读 1 次，预读 1527 次。</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zt  <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> <span class="keyword">id</span> <span class="keyword">asc</span></span><br><span class="line"><span class="comment">--用时：4720毫秒。 扫描计数 1，逻辑读 41952 次，物理读 0 次，预读 1287 次。</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zt  <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> <span class="keyword">id</span> <span class="keyword">desc</span></span><br><span class="line"><span class="comment">--用时：4732毫秒。 扫描计数 1，逻辑读 55350 次，物理读 10 次，预读 775 次。</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zt  <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> fbrq <span class="keyword">asc</span></span><br><span class="line"><span class="comment">--用时：173毫秒。 扫描计数 1，逻辑读 290 次，物理读 0 次，预读 0 次</span></span><br><span class="line"><span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,ydyh,zt <span class="keyword">from</span> tgongwen <span class="keyword">order</span> <span class="keyword">by</span> fbrq <span class="keyword">desc</span></span><br><span class="line"><span class="comment">--用时：152毫秒。 扫描计数 1，逻辑读 289 次，物理读 0 次，预读 0 次。</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><p>从以上我们可以看出，不排序的速度以及逻辑读次数都是和“order by 聚集索引列”的速度是相当的，但这些都比“order by 非聚集索引列”的查询速度是快得多的。</p></li>
+<li><p>同时，按照某个字段进行排序的时候，无论是正序还是倒序，速度是基本相当的。</p></li>
+</ul></li>
+<li><p>高效的TOP</p>
+<ul>
+<li>事实上，在查询和提取超大容量的数据集时，影响数据库响应时间的最大因素不是数据查找，而是物理的I/0操作。如：</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> top <span class="number">10</span> * <span class="keyword">from</span> (<span class="keyword">select</span> top <span class="number">10000</span> <span class="keyword">id</span>,fbrq,zt <span class="keyword">from</span> tgongwen</span><br><span class="line"><span class="keyword">where</span> fbyh=<span class="string">'办公室’ order by id Desc) as a  order by id Asc</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>这条语句，从理论上讲，整条语句的执行时间应该比子句的执行时间长，但事实相反。因为，子句执行后返回的是10000条记录，而整条语句仅返回10条语句，所以影响数据库响应时间最大的因素是物理I/O操作。</li>
+<li>而限制物理I/O操作此处的最有效方法之一就是使用TOP关键词了。</li>
+<li>TOP关键词是SQL SERVER中经过系统优化过的一个用来提取前几条或前几个百分比数据的词。在实践中的应用，发现TOP确实很好用，效率也很高。</li>
+<li>但这个词在另外一个大型数据库ORACLE中却没有，这不能说不是一个遗憾，虽然在ORACLE中可以用其他方法（如：rownumber）来解决。</li>
+<li>在以后的关于“实现千万级数据的分页显示存储过程”的讨论中，我们就将用到TOP这个关键词。</li>
+</ul></li>
+</ul></li>
+<li><p>思考：</p>
+<ol type="1">
+<li>查询的类型</li>
+<li>每类查询的查询速度与效率如何决定？</li>
+<li>对于连接查询和子查询，你有什么见解？谁快，谁慢？
+<ul>
+<li>当查询字段超出一个表的范围的时候，必须用连接查询。</li>
+<li>多数情况下连接查询和子查询可以对等使用</li>
+</ul></li>
+</ol></li>
+<li><p>优化总结</p>
+<ol type="1">
+<li><p>合理使用索引</p></li>
+<li><p>避免或简化排序</p>
+<ul>
+<li>应当简化或避免对大型表进行重复的排序。当能够 利用索引自动以适当的次序产生输出时，优化器就避免了排序的步骤</li>
+</ul></li>
+<li><p>消除对大型表行数据的顺序存取</p>
+<ul>
+<li>在嵌套查询中，对表的顺序存取对查询效率可能产生致命的影响。</li>
+<li>例如：一个嵌套3层的查询，如果每层都查询1000行，那么这个查询就要查询10亿行数据。</li>
+<li>避免这种情况的主要方法就是对连接的列进行索引。</li>
+<li>还可以使用并集来避免顺序存取。</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> ＊ <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> (customer_num=<span class="number">104</span> <span class="keyword">AND</span> order_num&gt;<span class="number">1001</span>)</span><br><span class="line"><span class="keyword">OR</span> order_num=<span class="number">1008</span></span><br></pre></td></tr></table></figure></p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> ＊ <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> customer_num=<span class="number">104</span> <span class="keyword">AND</span>  order_num&gt;<span class="number">1001</span></span><br><span class="line"><span class="keyword">UNION</span></span><br><span class="line"><span class="keyword">SELECT</span> ＊ <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_num=<span class="number">1008</span></span><br></pre></td></tr></table></figure></p></li>
+<li><p>避免相关子查询</p>
+<ul>
+<li>一个列的标签同时在主查询和where子句中的查询中出现，那么很可能当主查询中的列值改变之后，子查询必须重新查询一次。查询嵌套层次越多，效率越低，因此应当尽量避免子查询。</li>
+<li>如果子查询不可避免，那么要在子查询中过滤掉尽可能多的行。</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> a <span class="keyword">from</span> <span class="keyword">table</span> <span class="keyword">where</span> b <span class="keyword">in</span></span><br><span class="line"><span class="keyword">select</span> b <span class="keyword">from</span> table2 <span class="keyword">where</span> a like....</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>where 中又用到了外层查询中的列</li>
+</ul></li>
+<li><p>避免困难的正规表达式</p>
+<ul>
+<li>LIKE关键字支持通配符匹配，技术上叫正规表达式。但这种匹配特别耗费时间。</li>
+<li>思考：如何将下列语句修改成不用正规表达式的写法？例如：</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> ＊ <span class="keyword">FROM</span> customer <span class="keyword">WHERE</span> zipcode <span class="keyword">LIKE</span> ‘<span class="number">98</span>_ _ _’</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>语句改为</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> ＊ <span class="keyword">FROM</span> customer <span class="keyword">WHERE</span> zipcode &gt;‘<span class="number">98000</span>’</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>在执行查询时就会利用索引来查询，显然会大大提高速度。</li>
+</ul></li>
+<li><p>使用临时表加速查询</p>
+<ul>
+<li>把表的一个子集进行排序并创建临时表，有时能加速查询。它有助于避免多重排序操作，而且在其他方面还能简化优化器的工作。</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> cust.name，rcvbles.balance，……other <span class="keyword">columns</span></span><br><span class="line"><span class="keyword">FROM</span> cust，rcvbles</span><br><span class="line"><span class="keyword">WHERE</span> cust.customer_id = rcvlbes.customer_id</span><br><span class="line"><span class="keyword">AND</span> rcvblls.balance&gt;<span class="number">0</span>  <span class="keyword">AND</span> cust.postcode&gt;‘<span class="number">98000</span>’</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> cust.name</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>如果这个查询要被执行多次而不止一次，可以把所有未付款的客户找出来放在一个临时文件中，并按客户的名字进行排序</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> cust.name，rcvbles.balance，……other <span class="keyword">columns</span></span><br><span class="line"><span class="keyword">FROM</span> cust，rcvbles</span><br><span class="line"><span class="keyword">WHERE</span> cust.customer_id = rcvlbes.customer_id</span><br><span class="line"><span class="keyword">AND</span> rcvblls.balance&gt;<span class="number">0</span>   <span class="keyword">ORDER</span> <span class="keyword">BY</span> cust.name</span><br><span class="line"><span class="keyword">INTO</span> TEMP cust_with_balance</span><br></pre></td></tr></table></figure></p></li>
+<li><p>要善于使用存储过程，它使SQL变得更加灵活和高效。</p>
+<ul>
+<li><p>表stuff有200000行，id_no上有非群集索引，请看下面这个SQL：</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(*) <span class="keyword">from</span> <span class="keyword">stuff</span> <span class="keyword">where</span> id_no <span class="keyword">in</span>(<span class="string">'0'</span>,<span class="string">'1'</span>)</span><br></pre></td></tr></table></figure></p></li>
+<li><p>实践证明，表的行数越多，工作表的性能就越差，当stuff有 220000行时，执行时间竟达到220秒！还不如将or子句分还不如将or子句分开：</p>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(*) <span class="keyword">from</span> <span class="keyword">stuff</span> <span class="keyword">where</span> id_no=‘<span class="number">0</span>’</span><br><span class="line"><span class="keyword">select</span> <span class="keyword">count</span>(*) <span class="keyword">from</span> <span class="keyword">stuff</span> <span class="keyword">where</span> id_no=‘<span class="number">1</span>’</span><br></pre></td></tr></table></figure></p></li>
+<li><p>思考：如果就是希望得多一个几个值如何处理？</p>
+<ul>
+<li>写一个简单的存储过程</li>
+</ul>
+<p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> proc count_stuff <span class="keyword">as</span></span><br><span class="line">    <span class="keyword">declare</span> @a <span class="built_in">int</span></span><br><span class="line">    <span class="keyword">declare</span> @b <span class="built_in">int</span></span><br><span class="line">    <span class="keyword">declare</span> @c <span class="built_in">int</span></span><br><span class="line">    <span class="keyword">declare</span> @d <span class="built_in">char</span>(<span class="number">10</span>)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        <span class="keyword">select</span> @a=<span class="keyword">count</span>(*) <span class="keyword">from</span> <span class="keyword">stuff</span> <span class="keyword">where</span> id_no=<span class="string">'0'</span></span><br><span class="line">        <span class="keyword">select</span> @b=<span class="keyword">count</span>(*) <span class="keyword">from</span> <span class="keyword">stuff</span> <span class="keyword">where</span> id_no=<span class="string">'1'</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">select</span> @c=@a+@b</span><br><span class="line">    <span class="keyword">select</span> @d=<span class="keyword">convert</span>(<span class="built_in">char</span>(<span class="number">10</span>),@c)</span><br><span class="line">    print @d</span><br></pre></td></tr></table></figure></p></li>
+</ul></li>
+</ol></li>
+</ul></li>
+</ul></li>
+</ol>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zby</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E5%BA%94%E7%94%A8/">http://blog.torpedostudio.cn/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E5%BA%94%E7%94%A8/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2020/03/09/%E6%95%B0%E6%8D%AE%E5%BA%93Note02%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E7%90%86%E8%AE%BA/">数据库Note02查询优化理论</a>
+            
+            
+            <a class="next" rel="next" href="/2020/03/09/LinearOptimizationNote04/">LinearOptimizationNote 04 - Simplex method 单纯形法</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zby | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

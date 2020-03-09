@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zby">
+
+
+    <meta name="subtitle" content="Life is a "Present"">
+
+
+
+    <meta name="keywords" content="NLP">
+
+
+<title>LinearOptimizationNote 03 - Geometry of LP 对LP问题的直观认识 | Torpedostudio</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+            <!-- MathJax配置，可通过单美元符号书写行内公式等 -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+    });
+</script>
+<!-- 给MathJax元素添加has-jax class -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<!-- 通过连接CDN加载MathJax的js代码 -->
+<script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"><!-- hexo-inject:begin --><!-- hexo-inject:end --></head>
+<body>
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">TorpedoStudio</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">TorpedoStudio</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">LinearOptimizationNote 03 - Geometry of LP 对LP问题的直观认识</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zby</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">March 7, 2020&nbsp;&nbsp;13:25:06</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="terminologies-共同的语言">Terminologies 共同的语言</h2>
+<h3 id="回顾">1. 回顾</h3>
+<ol type="1">
+<li><p>Baseline model（检查s.t.,与所有变量非负）</p>
+<p><span class="math display">\[
+ Min \quad c^Tx\\
+ (LP)\quad s.t.\, Ax =b\\
+ x\geq 0
+ \]</span></p></li>
+<li><p>Feasible domain，从n维空间向量中，选出变量要求服从约束s.t.,还要满足所有变量大于零，得到可行域P</p>
+<p><span class="math display">\[ P = \{x\in R^n|Ax=b,x\geq0\}\]</span></p></li>
+<li><p>Feasible solution，从可行域中找到可行解</p>
+<ul>
+<li>x is a feasible solution if <span class="math inline">\(x\in P\)</span></li>
+</ul></li>
+<li><p>Consistency P里面至少有一个可行解时候，就说LP具有一致性的（也就是有解的）</p>
+<ul>
+<li>When <span class="math inline">\(P\neq \emptyset\)</span>,LP is consistent</li>
+</ul></li>
+</ol>
+<h3 id="bounded-有界">2. Bounded 有界</h3>
+<ol type="1">
+<li>Bounded feasible domain： <span class="math display">\[
+ P \quad is\quad Bounded \quad if\\
+ \exists M &gt;0 \quad such \quad that \quad ||x|| \leq M,\forall x \in P.
+ \]</span>
+<ul>
+<li>如果任取一个可行域中的x与原点的距离都是小于一个大于零的值，那么我们就说LP有一个有界的可行域</li>
+</ul></li>
+<li>Bounded LP： <span class="math display">\[
+ LP \quad is\quad Bounded \quad if\\
+ \exists M\in R  \quad such \quad that \quad c^Tx \geq M,\forall x \in P.
+ \]</span>
+<ul>
+<li>线性函数（连续函数）在一个有限值上不会得到正无穷或负无穷</li>
+<li>如果对于一个可行域中的x，它所对应的目标值大于一个大于零的值，那么就说是一个bounded LP</li>
+</ul></li>
+<li>有界的LP和有界的feasible domain的关系
+<ul>
+<li>有界的feasible domain 一定是一个有界的LP</li>
+<li>有界的LP不一定有有界的feasible domain</li>
+</ul></li>
+</ol>
+<h3 id="最优解">3. 最优解</h3>
+<ol type="1">
+<li>optimal solution： <span class="math display">\[
+ x^* is\quad an\quad optiaml\quad solution\quad if\\
+ x^*\in P \quad and \quad c^Tx^* = \min \limits_{x\in P}c^Tx
+ \]</span>
+<ul>
+<li>可行解里面值最小的一个，那就有了最优值和最优解</li>
+</ul></li>
+<li>optimal solution set <span class="math display">\[ P^*=\{x^*|x*\quad is \quad optimal\}\]</span>
+<ul>
+<li>把所有的最优值放在一起形成一个最优解集</li>
+</ul></li>
+<li>最终我们可以说： <span class="math display">\[X^* \quad sloves\quad LP.if\quad x^*\in P^*.\]</span></li>
+</ol>
+<h2 id="background-knowledge-背景知识">Background knowledge 背景知识</h2>
+<h3 id="观察">观察</h3>
+<ol type="1">
+<li>每个约束在解空间中到底是表示什么含义（几何意义上）--超平面
+<ul>
+<li><span class="math inline">\(x_1-2x_2=30\)</span> -- 二维空间，减去一个自由度，变成一维，就是一条线，两个点决定一条线，只要满足<span class="math inline">\(x_1-2x_2=30\)</span>的都落在这条线上。</li>
+<li>如果有三个变量<span class="math inline">\(x_1,x_2,x_3\)</span>,三维空间减去一个自由度就是二维平面。</li>
+<li>如果n个变量，就得到n-1位的超平面</li>
+</ul></li>
+<li>Definition
+<ul>
+<li><span class="math inline">\(For\quad a \quad vector\quad a\in R^n,a\neq 0,and\quad a\quad scalar \quad \beta \in R\)</span>
+<ul>
+<li>对于每一个向量a，保证a不等于0，并且存在一个常量beta</li>
+</ul></li>
+<li>definite
+<ul>
+<li><span class="math inline">\(H=\{x\in R^n|a^Tx=\beta\}hyperplane\)</span></li>
+<li>上边的参数a和常量beta 满足参数a与变量的结果等于一个常量beta，我们就说这是一个线性约束</li>
+</ul></li>
+</ul></li>
+<li><span class="math inline">\(x_1-2x_2=30\)</span>
+<ul>
+<li><span class="math inline">\(a^T=(1,-2)\)</span>，<span class="math inline">\(a^Tx=30\)</span>,是一个线性约束，超平面</li>
+<li>一个hyperplane把整个空间分成三部分，也就是把原来解空间切掉了一部分，我们就只看这一部分
+<ul>
+<li>比beta大的那部分空间叫做upper-half-space（小的叫lower-half-space，发线，也就是a是指向这个upper-half-space的。</li>
+<li>发线指的方向是beta越来越大的方向</li>
+<li>-a的方向是越来越小</li>
+</ul></li>
+<li>so，回到LP，我们要想Minimize，我们就要向-c的方向走，越走，objection function 越小</li>
+</ul></li>
+</ol>
+<h3 id="hyperplane">hyperplane</h3>
+<ol type="1">
+<li>Geometirc representation
+<ul>
+<li>pic</li>
+</ul></li>
+<li>Properties of hyperplanes
+<ul>
+<li>Property 1: The normal vector <strong>a</strong> 是垂直（orthogonal）于hyperplane H上的任何一个向量
+<ul>
+<li>Proof 证明 <strong>a</strong>与H垂直
+<ul>
+<li>pic</li>
+<li><span class="math inline">\(\forall y,z \in H\quad\)</span> 给出任意的两个点(向量的头尾)</li>
+<li><span class="math inline">\(a^T(y-z)=a^Ty-a^Tz=\beta - \beta =0\)</span></li>
+</ul></li>
+</ul></li>
+<li>Property 2: 法向量指向upper-half-space
+<ul>
+<li>Proof 证明指向upper-half-space
+<ul>
+<li>pic</li>
+<li><span class="math inline">\(For \quad any \quad z\in H,w\in H_L^i,\)</span>z在H上，w在开的upper-half-space中</li>
+<li><span class="math inline">\(a^T(w-z) = a^Tw-a^Tz &lt; \beta -\beta = 0\)</span>其中在lower半空间中的得到的结果是小于beta的，也就是说<span class="math inline">\(a^Tw\)</span>是小于beta的所以得到小于零，等同于lower空间的向量与normal vector的夹角大于90度，所以normal vector是指向upper-half-space的。</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>Properties of feasible solution set
+<ul>
+<li>polyhedeal set 或者是 holyhedron 是由有限个封闭版空间的交集构成。</li>
+<li>如果不是空的而且不是bounded， 那么他是polytope（多边形）</li>
+<li>Property 3:
+<ul>
+<li>The feasible domain of a standard form LP</li>
+<li><span class="math inline">\(P=\{x\in R^n|Ax=b,x\leq0\}\)</span> is a polyhedron set</li>
+<li>满足x大于等于0，表示封闭半空间，Ax=b表示一个超平面，是2n个半封闭空间的交集</li>
+</ul></li>
+</ul></li>
+<li>Properties of optimal solutions
+<ul>
+<li>pic</li>
+<li>if <span class="math inline">\(P\neq \emptyset \quad and \quad \exists \beta \in R\)</span> such that:</li>
+<li><span class="math inline">\(P \subset H_L:=\{x\in R^n|-c^Tx\geq\beta\}\)</span></li>
+<li>then <span class="math inline">\(\min\limits_{x\in P}c^Tx\leq -\beta\)</span></li>
+<li>Moreover,if <span class="math inline">\(x^*\in P\bigcap H \quad then\quad x^*\in P^*\)</span></li>
+<li>将p放到lower一边，而且P与hyperplane 有交集，那么就得到optimal solution</li>
+</ul></li>
+</ol>
+<h2 id="graphic-method-图解">Graphic method 图解</h2>
+<h3 id="图解法">图解法</h3>
+<ol type="1">
+<li><p>step1 Draw the feasible domain P</p>
+<ul>
+<li>If <span class="math inline">\(P=\emptyset\)</span>.stop! No solution</li>
+</ul></li>
+<li><p>step2 Use -c 作为法线向量，对于每一个顶点看</p>
+<ul>
+<li>if <span class="math inline">\(P\in H_L:=\{x\in R^n|-c^Tx\geq \beta\}for \quad some \quad \beta \in R\)</span></li>
+<li>如果此时满足这个条件，那么我们就找到了最优解</li>
+<li>如果此时不满足这个条件，这个问题就是一个unbounded below ，无下届的</li>
+</ul></li>
+</ol>
+<h3 id="pro-and-cons">Pro and Cons</h3>
+<ol type="1">
+<li>Advantages
+<ul>
+<li>Geometrically simple</li>
+<li>几何化后用图形很简单</li>
+</ul></li>
+<li>Disadvantages
+<ul>
+<li>Algebraically difficult 代数计算困难
+<ul>
+<li>How many vertices are there？ 顶点个数多了没法算</li>
+<li>How to identify each certex？ 顶点的坐标定位很难</li>
+</ul></li>
+</ul></li>
+</ol>
+<h3 id="example">Example</h3>
+<ol type="1">
+<li>为了变成standard form ，将二维的变成了四维的
+<ul>
+<li>二维的有几何意义的
+<ul>
+<li><span class="math inline">\((-)Minimize \quad -x_1 - 2x_2\)</span> <span class="math display">\[
+  s.t.\\
+  x_1+x_2  \geq 40\\
+  2x_1+x_2 \geq 60\\
+  x_1,x_2\geq 0
+  \]</span></li>
+</ul></li>
+<li>转变成四维的，具有代数意义
+<ul>
+<li><span class="math inline">\((-)Minimize \quad -x_1 - 2x_2\)</span> <span class="math display">\[
+  s.t.\\
+  x_1+x_2+x_3= 40\\
+  2x_1+x_2+x_4=60\\
+  x_1,x_2,x_3,x_4 \geq 0
+  \]</span> <span class="math display">\[
+  c=\begin{bmatrix}-1\\-2\\0\\0\end{bmatrix}
+  \quad A = \begin{bmatrix}1&amp;&amp;1&amp;&amp;1&amp;&amp;0\\2&amp;&amp;1&amp;&amp;0&amp;&amp;1\end{bmatrix}
+  \quad b = \begin{bmatrix}40\\60\end{bmatrix}
+  \]</span></li>
+</ul></li>
+</ul></li>
+<li>Graphic solution
+<ul>
+<li>pic</li>
+<li>Since <span class="math inline">\(\min\limits_{x\in P}c^Tx\geq -80\)</span></li>
+<li>also <span class="math inline">\(-x_1-2x_2=-80at\quad \begin{bmatrix}0\\40\end{bmatrix}\)</span></li>
+<li>Hence<span class="math inline">\(\begin{cases}x_1=0\\x_2=40\end{cases}\)</span>is an optimal solution</li>
+</ul></li>
+<li>Any better way?
+<ul>
+<li>Simplex method</li>
+<li>是一种生成跟管理可行解集合中的顶点的方法</li>
+</ul></li>
+</ol>
+<h2 id="fundamental-theorem-of-lp-重要定理">Fundamental theorem of LP 重要定理</h2>
+<ol type="1">
+<li>假设有一个LP问题，feasible domain是非空的，那它的最优解只有两种情况：
+<ul>
+<li>要么是unbounded below</li>
+<li>要么是在P的一个extreme point 取到</li>
+</ul></li>
+<li>background Knowledge
+<ul>
+<li>Definition： Let <span class="math inline">\(x^1,x^2,\dots ,x^p \in R^n,\lambda_1,\lambda_2,\dots,\lambda_p \in R\)</span>and <span class="math display">\[ x = \sum_{i=1}^p \lambda_ix^i = \lambda_1x^2+\lambda_2x^2+\dots+\lambda_px^p\]</span>
+<ul>
+<li>有p个点，每个点都在n维空间里面，定义一个线性组合</li>
+<li>我们说x是一个Linear Combination（线性组合）
+<ul>
+<li>如果<span class="math inline">\(\sum_{i=1}^p\lambda_i=1\)</span>，我们说x是仿射组合（affine combination），图形上是一条线</li>
+<li>如果 <span class="math inline">\(\lambda_i\geq0\)</span>,我们说x是一个锥组合（conic combination），全在第一象限</li>
+<li>如果<span class="math inline">\(\sum_{i=1}^p\lambda_i=1,\lambda_i\geq0\)</span>,那我们说x是一个凸组合（convex combination），十一个线段</li>
+</ul></li>
+<li>pic</li>
+</ul></li>
+<li>Affine set,convex set,and cone
+<ul>
+<li>definition,S是n维空间的一个子集</li>
+<li>如果S中任意两点的仿射组合均落在S中，那么S就是一个仿射集合</li>
+<li>如果S中任意两点的凸组合均落在S中，那么S就是一个凸集合</li>
+<li>如果<span class="math inline">\(\lambda x \in S,\quad for \quad all\quad x\in S\quad and \quad \lambda \geq 0\)</span> then S 是一个锥</li>
+</ul></li>
+<li>如果是affine set 那么一定是 convex set</li>
+<li>代数证明
+<ul>
+<li>H is convex ,<span class="math inline">\(x_1,x_2\in H\)</span></li>
+<li>希望证明<span class="math inline">\(\lambda_1x_1+\lambda_2x_2\in H即\begin{cases}\lambda_1+\lambda_2=1\\ \lambda_1,\lambda_2\geq 0\end{cases}\)</span></li>
+<li>也就是<span class="math inline">\(a^T(\lambda_1x_1+\lambda_2x_2)=\beta\)</span></li>
+<li>上边这个=&gt;<span class="math inline">\(\lambda_1a^Tx_1=\beta\)</span>+<span class="math inline">\(\lambda_2a^Tx_2=\beta\)</span></li>
+<li>=&gt;<span class="math inline">\(\beta(\lambda_1+\lambda_2)\)</span></li>
+<li>lambda相加等于1，上式结果就是beta，就是affine set ，那么也就是convex set</li>
+</ul></li>
+</ul></li>
+<li>Example
+<ul>
+<li>可行域的图形意义是啥 <span class="math display">\[P=\{x\in R^n|Ax=b,x\geq 0 \}\]</span></li>
+<li>P 是一个<strong>polyhedron set</strong>（2n个加上n个halfspace）</li>
+<li>P 是一个<strong>convex set</strong></li>
+<li>P 是<strong>m个hyperplane</strong>和第一象限的锥（<strong>the cone of the first orthant</strong>) 的交集</li>
+<li>Ax=b并且x&gt;=0得解要保证hyperplane和第一象限锥的交集不是空的</li>
+<li>进一步说，Ax=<span class="math inline">\(\begin{bmatrix}a_{11}x_1+a_{12}x_2+\dots+a_{1n}x_n\\a_{21}x_1+a_{22}x_2+\dots+a_{2n}x_n\\ \vdots \\a_{m1}x_1+a_{m2}x_2+\dots+a_{mn}x_n\end{bmatrix}\)</span>
+<ul>
+<li>=&gt; <span class="math inline">\(A=(A_1|A_2|\dots|A_n)\)</span></li>
+<li>=&gt; <span class="math inline">\(Ax=(A_1|A_2|\dots|A_n)\begin{bmatrix}x_1\\x_2\\ \vdots\\x_n\end{bmatrix}=\sum_{j=1}^nx_jA_j \in R^m\)</span></li>
+<li>如果 m 维的b落在由A的列生成的cone里面，那么这个问题有解，掉不在里面，无解。</li>
+</ul></li>
+<li>A矩阵的列形成的convex cone，<span class="math inline">\(A_C=\{y\in R^m|y=Ax,x\in R^n.x\geq 0\}\)</span></li>
+</ul></li>
+<li>interior and boundary point
+<ul>
+<li>怎么验证内部点--与边界有距离
+<ul>
+<li>给<span class="math inline">\(set\quad S\subset R^n\)</span>,有一点<span class="math inline">\(x\in S\)</span>是S的内部点： <span class="math display">\[\exists\, \epsilon &gt; 0\quad 开一个足够小的球，B=\{y\in R^n|\quad ||x-y||\leq \epsilon\}\subset S.\]</span></li>
+<li>以x做球心，半径小于epsilon的球</li>
+</ul></li>
+<li>同理，对于边界点，无论开多小的球，上式都不会成立</li>
+<li>从内部点看convex set ： 所有的local 都是 global ，其内的任一点都可以通过线段达到所有的点，non-convex set 会有阻隔。</li>
+<li>从边界点看convex set，对于任意的边界点，都可以找到一个hyperplane 可以把整个convex set 撑起来（画到一边），non-convex set 总有一点做不到
+<ul>
+<li>Separation Theorem</li>
+<li><span class="math inline">\(S\subset R^n\)</span> 是convex，那么</li>
+<li><span class="math inline">\(\forall x \in bdry(S),\exists a\quad hyperplane\quad H\quad such\quad that\quad x\in H\quad and \quad either\quad S\subseteq H_L\quad or \quad S\subseteq H_u\)</span></li>
+<li>pic</li>
+</ul></li>
+<li>从外部点看，总可以花一条线，这条线与convex set 分别落在两边</li>
+</ul></li>
+<li>Question
+<ul>
+<li>现在再回头看：如果LP（二维或者三维）有有限个最优解，那么P的一点个顶点就是最优的。</li>
+<li>考虑：supporting hyperplane <span class="math display">\[ H = \{x\in R^n|-c^Tx=\beta\}\]</span></li>
+<li>考虑2：所有的边界点都一样吗？
+<ul>
+<li>有一些点是sits on the shoulders of others ，就是有一些点是抬轿子的（顶点），有一些点是坐轿子的。</li>
+<li>如果x不可以通过S中的另外两个点convex combination(代数式子)表示出来，那么x就是extreme points（极点）</li>
+<li>极点的几何意义--Geometrical meaning of extreme points
+<ul>
+<li>Definition:
+<ul>
+<li>pic</li>
+<li>让P是一个convex polyhedron，H是P的一个supporting hyperplane。那么<span class="math inline">\(F=P\bigcap H\)</span>定义了a face of P P的一个面
+<ul>
+<li>when</li>
+<li>dim(F)=0，是一个vertex</li>
+<li>dim(F)=1，是一个edge</li>
+<li>dim(F)=dim(P)-1，是一个facet（面）</li>
+</ul></li>
+</ul></li>
+<li>Theorem：
+<ul>
+<li>如果P是一个convex polyhedron，<span class="math inline">\(x\in P\)</span>有且仅有x是P的一个极点时，x是一个顶点vertex</li>
+</ul></li>
+</ul></li>
+<li>Representation of extreme points
+<ul>
+<li>怎么找到特定的extreme points</li>
+<li>代数上，给定一个Ax=b,x&gt;=0,怎么找到vertex</li>
+<li>example
+<ul>
+<li>pic</li>
+<li>内部点一个零都没有，边界点只有一个零，顶点两个零</li>
+</ul></li>
+<li>Ax=b 有n个variable 和m个linear equations
+<ul>
+<li>当n&gt;m是，我们只需要考虑m个变量m个约束来解决问题</li>
+<li>可以把n-m个变量看作0，然后用m个变量和m个约束来解决问题。</li>
+<li>A的列，m个变量（正），最好是linear independent（线性无关，矩阵的inverse还是本身）</li>
+<li>Example
+<ul>
+<li>system of equations <span class="math display">\[
+  s.t.\\
+  x_1+x_2+x_3= 40\\
+  2x_1+x_2+x_4= 60\\
+  x_1,x_2,x_3,x_4\geq 0
+  \]</span></li>
+<li>Linear independence of the columns <span class="math display">\[
+  \begin{bmatrix}1\\2\end{bmatrix}x_1+\begin{bmatrix}1\\1\end{bmatrix}x_2+\begin{bmatrix}1\\0\end{bmatrix}x_3+\begin{bmatrix}0\\1\end{bmatrix}x_4=\begin{bmatrix}40\\60\end{bmatrix}
+  \]</span></li>
+<li>四个里面选两个就可以解</li>
+</ul></li>
+</ul></li>
+<li>Finding extreme points
+<ul>
+<li>Theorem：
+<ul>
+<li><span class="math inline">\(x\in P=\{x\in R^n|Ax=b,x\geq 0\}\)</span> 当且仅当非负的x对应的A的列是线性无关的时候，x是P的一个极点。</li>
+<li>proof：
+<ul>
+<li>Without loss of genearlity(不失一般性)，我们假设，前面P个x是正的，其他的都是零（因为排列次序是可以换的）</li>
+<li><span class="math inline">\(x=\begin{bmatrix}\overline{x}\\0\end{bmatrix} where\quad \overline{x}=\begin{bmatrix}x_1\\\vdots\\x_p\end{bmatrix}&gt;0\)</span></li>
+<li>而且定义A的前p列为<span class="math inline">\(\overline{x}\)</span>,那么<span class="math inline">\(Ax=\overline{A}x=b\)</span></li>
+<li>假设<span class="math inline">\(\overline{A}\)</span>不是线性无关的，那么<span class="math inline">\(\exists\overline{w}\neq 0\quad 使得\quad \overline{Aw}=0\)</span></li>
+<li>stay证明x是extreme points A的列是线性无关</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>Managing extreme points algebracially
+<ul>
+<li>假设A是一个m*n的矩阵，n&gt;=m，如果A有m个线性无关的列，我们说A有full rank（full row rank）。</li>
+<li>这种情况下，我们可以rearrange</li>
+<li>proof stay。。。。</li>
+<li>Definition：（basic solution and basic feasible solution）
+<ul>
+<li>stay</li>
+</ul></li>
+<li>Example of basic and basic feasible solutions
+<ul>
+<li><span class="math inline">\(Minimize:\quad x_1-2x_2\)</span> <span class="math display">\[
+  subject to.\\
+  x_1+x_2+x_3= 40\\
+  2x_1+x_2+x_4= 60\\
+  x_1,x_2,x_3,x_4\geq 0
+  \]</span></li>
+<li>pic</li>
+<li>内部点，边界点，顶点向量表示（stay）</li>
+</ul></li>
+</ul></li>
+<li>Further results
+<ul>
+<li>如果A没有Full rank，那么
+<ul>
+<li>要么Ax=b没有solution并且P是空集</li>
+<li>要么有一些constraints 是redundant
+<ul>
+<li>对于第二种情况，在将这些constraints移除后，新的A还是full rank</li>
+</ul></li>
+</ul></li>
+<li>Corollary 必然的： 当且仅当x是某些basicB所对应的bfs时，P中的一点x是P的extreme points（顶点）-- 相互对应的</li>
+<li>Corollary 必然的：P只有有限数量的extreme points</li>
+</ul></li>
+<li>有多少vertices？
+<ul>
+<li>C(n,m),但是这个不是一个效地数目，特别是当n和m变大时。</li>
+</ul></li>
+<li>所以extreme points 到底带给我们什么？
+<ul>
+<li>pic</li>
+<li>P中的任意一点都能用vertex来convex combination</li>
+<li><span class="math inline">\(x=\sum_{i=1}^5\lambda_iv^i,\lambda_i\geq 0,\sum \lambda_i=1\)</span></li>
+<li>more general
+<ul>
+<li>Extremal direction
+<ul>
+<li>pic</li>
+<li>Definition</li>
+<li>Observations:
+<ul>
+<li>P is unbounded = P has an ext1remal direction</li>
+<li>d (!= 0) is a extremal direction of P = Ad=0且d&gt;=0</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>Resolution theorem
+<ul>
+<li>stay</li>
+<li>必然的：p是bounded，P可以被extreme points convex combination 出来</li>
+<li>必然的：如果P是非空的，那么至少有一个顶点</li>
+<li>stay</li>
+</ul></li>
+<li>Fundamental theorem of LP
+<ul>
+<li>假设有一个LP问题，feasible domain是非空的，那它的最优解只有两种情况：</li>
+<li>要么是unbounded below</li>
+<li>要么是在P的一个extreme point 取到</li>
+<li>Proof:通过Resolution theorem
+<ul>
+<li>有两种
+<ul>
+<li>case1：
+<ul>
+<li>P有extremal direction d 使得 <span class="math inline">\(c^Td&lt;0\)</span>.hence P 是unbounded而且z沿着b取到无穷小</li>
+<li>P没有d是得&lt;0,要么是没有d,要么是<span class="math inline">\(c^Td&gt;=0\)</span>
+<ul>
+<li>这两种情况下<span class="math inline">\(c^Tx\geq c^Tv^{min}\)</span></li>
+<li>所以最小值在一个顶点取得</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ol>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zby</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://blog.torpedostudio.cn/2020/03/07/LinearOptimizationNote03/">http://blog.torpedostudio.cn/2020/03/07/LinearOptimizationNote03/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/LP/"># LP</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2020/03/07/%E5%A4%9A%E4%B8%BB%E4%BD%93%E4%BB%BF%E7%9C%9F/">多主体仿真 - MultiAgentSystem</a>
+            
+            
+            <a class="next" rel="next" href="/2020/03/06/LinearOptimizationNote02/">LinearOptimizationNote 02 - Preliminaries，解决线性优化问题的预热</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zby | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>
